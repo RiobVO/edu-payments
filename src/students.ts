@@ -31,17 +31,20 @@ const nonBlank = (maxLength: number) => ({ type: 'string', minLength: 1, maxLeng
 
 const studentFields = {
   name: nonBlank(100),
-  // Формат телефонов не навязываем (+998, городские, с пробелами), отсекаем только явный мусор
-  phone: { type: 'string', pattern: '^\\+?[0-9 ()-]{7,20}$' },
+  // Формат телефонов не навязываем (+998, городские, с пробелами), но цифр должно быть 7–15
+  phone: { type: 'string', maxLength: 30, pattern: '^\\s*\\+?(?:[ ()-]*[0-9]){7,15}[ ()-]*\\s*$' },
   group: nonBlank(50),
   monthlyFee: { type: 'integer', minimum: 1, maximum: 1_000_000_000 },
 };
 
+// Приведение типов выключено, поэтому id из URL проверяем как строку из цифр и переводим в число сами
 export const idParams = {
   type: 'object',
   required: ['id'],
-  properties: { id: { type: 'integer', minimum: 1 } },
+  properties: { id: { type: 'string', pattern: '^[1-9][0-9]{0,14}$' } },
 };
+
+export type IdParams = { id: string };
 
 export const studentsRoutes: FastifyPluginAsync<AppDeps> = async (app, { db, today }) => {
   const findById = db.prepare('SELECT * FROM students WHERE id = ?');
@@ -51,8 +54,8 @@ export const studentsRoutes: FastifyPluginAsync<AppDeps> = async (app, { db, tod
     return rows.map(toStudent);
   });
 
-  app.get<{ Params: { id: number } }>('/students/:id', { schema: { params: idParams } }, async (req, reply) => {
-    const row = findById.get(req.params.id) as StudentRow | undefined;
+  app.get<{ Params: IdParams }>('/students/:id', { schema: { params: idParams } }, async (req, reply) => {
+    const row = findById.get(Number(req.params.id)) as StudentRow | undefined;
     if (!row) return reply.code(404).send({ message: 'Student not found' });
     return toStudent(row);
   });
@@ -70,7 +73,7 @@ export const studentsRoutes: FastifyPluginAsync<AppDeps> = async (app, { db, tod
     return reply.code(201).send(toStudent(row));
   });
 
-  app.patch<{ Params: { id: number }; Body: Partial<StudentInput> }>('/students/:id', {
+  app.patch<{ Params: IdParams; Body: Partial<StudentInput> }>('/students/:id', {
     schema: {
       params: idParams,
       body: { type: 'object', minProperties: 1, additionalProperties: false, properties: studentFields },
@@ -85,14 +88,14 @@ export const studentsRoutes: FastifyPluginAsync<AppDeps> = async (app, { db, tod
         group_name  = COALESCE(?, group_name),
         monthly_fee = COALESCE(?, monthly_fee)
       WHERE id = ? RETURNING *
-    `).get(name?.trim() ?? null, phone?.trim() ?? null, group?.trim() ?? null, monthlyFee ?? null, req.params.id) as
+    `).get(name?.trim() ?? null, phone?.trim() ?? null, group?.trim() ?? null, monthlyFee ?? null, Number(req.params.id)) as
       StudentRow | undefined;
     if (!row) return reply.code(404).send({ message: 'Student not found' });
     return toStudent(row);
   });
 
-  app.delete<{ Params: { id: number } }>('/students/:id', { schema: { params: idParams } }, async (req, reply) => {
-    const { changes } = db.prepare('DELETE FROM students WHERE id = ?').run(req.params.id);
+  app.delete<{ Params: IdParams }>('/students/:id', { schema: { params: idParams } }, async (req, reply) => {
+    const { changes } = db.prepare('DELETE FROM students WHERE id = ?').run(Number(req.params.id));
     if (changes === 0) return reply.code(404).send({ message: 'Student not found' });
     return reply.code(204).send();
   });

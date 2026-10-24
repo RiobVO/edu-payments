@@ -15,3 +15,9 @@ it('отдаёт веб-страницу и её скрипт на корнев�
   const script = await app.inject({ method: 'GET', url: '/app.js' });
   expect(script.statusCode).toBe(200);
 });
+
+it('сообщает странице часовой пояс центра, чтобы «сегодня» совпадало с сервером', async () => {
+  const res = await app.inject({ method: 'GET', url: '/config' });
+  expect(res.statusCode).toBe(200);
+  expect(res.json()).toEqual({ timeZone: 'Asia/Tashkent' });
+});

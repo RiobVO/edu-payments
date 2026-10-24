@@ -27,6 +27,11 @@ describe('POST /students', () => {
     ['нулевая сумма', { monthlyFee: 0 }],
     ['отрицательная сумма', { monthlyFee: -100 }],
     ['дробная сумма', { monthlyFee: 100.5 }],
+    ['сумма строкой', { monthlyFee: '500000' }],
+    ['сумма-булево', { monthlyFee: true }],
+    ['телефон из пробелов', { phone: '       ' }],
+    ['телефон без цифр', { phone: '-------' }],
+    ['неизвестное поле', { comment: 'VIP' }],
   ])('отклоняет некорректные данные: %s', async (_case, overrides) => {
     const res = await app.inject({ method: 'POST', url: '/students', payload: { ...validStudent, ...overrides } });
     expect(res.statusCode).toBe(400);
@@ -61,8 +66,8 @@ describe('GET /students/:id', () => {
     expect(res.statusCode).toBe(404);
   });
 
-  it('отдаёт 400 для нечислового id', async () => {
-    const res = await app.inject({ method: 'GET', url: '/students/abc' });
+  it.each(['abc', '0', '1.5'])('отдаёт 400 для некорректного id %s', async (id) => {
+    const res = await app.inject({ method: 'GET', url: `/students/${id}` });
     expect(res.statusCode).toBe(400);
   });
 });
@@ -78,6 +83,18 @@ describe('PATCH /students/:id', () => {
   it('отклоняет пустое тело', async () => {
     const { id } = await createStudent(app);
     const res = await app.inject({ method: 'PATCH', url: `/students/${id}`, payload: {} });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('отклоняет неизвестные поля, а не молча игнорирует их', async () => {
+    const { id } = await createStudent(app);
+    const res = await app.inject({ method: 'PATCH', url: `/students/${id}`, payload: { monthly_fee: 700_000 } });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('не приводит булево значение к числу', async () => {
+    const { id } = await createStudent(app);
+    const res = await app.inject({ method: 'PATCH', url: `/students/${id}`, payload: { monthlyFee: true } });
     expect(res.statusCode).toBe(400);
   });
 

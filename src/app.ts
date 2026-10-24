@@ -22,13 +22,20 @@ export interface AppDeps {
 }
 
 export function buildApp({ dbPath, timeZone, now = () => new Date(), logger = true }: AppOptions): FastifyInstance {
-  const app = Fastify({ logger });
+  const app = Fastify({
+    logger,
+    // По умолчанию Fastify приводит типы (true → 1, "500" → 500) и молча вырезает лишние поля.
+    // Для денег это опасно: опечатка в имени поля давала 200 без изменений. Поэтому — строгая проверка.
+    ajv: { customOptions: { coerceTypes: false, removeAdditional: false } },
+  });
   const db = openDatabase(dbPath);
   const deps: AppDeps = { db, today: () => todayIn(timeZone, now()) };
 
   app.register(studentsRoutes, deps);
   app.register(paymentsRoutes, deps);
   app.register(debtorsRoutes, deps);
+  // Странице нужен тот же часовой пояс, что и серверу: иначе её «сегодня» разойдётся с проверкой даты
+  app.get('/config', async () => ({ timeZone }));
   app.register(fastifyStatic, { root: join(import.meta.dirname, '..', 'public') });
 
   app.addHook('onClose', async () => db.close());
