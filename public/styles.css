@@ -365,6 +365,19 @@ svg {
   font-weight: 600;
 }
 
+/* Сброс фильтра по группе виден на любой ширине: на телефоне бокового списка групп нет */
+.chip-clear {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .view-switch {
   display: flex;
   gap: 6px;

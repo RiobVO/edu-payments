@@ -27,6 +27,7 @@ const ui = {
   countAll: $('count-all'),
   groupList: $('group-list'),
   panelTitle: $('panel-title'),
+  clearGroup: $('clear-group'),
   list: $('debtors'),
   state: $('state'),
   stateText: $('state-text'),
@@ -380,6 +381,7 @@ function renderList() {
   const inGroup = (s) => state.group === null || s.group === state.group;
   const students = inView.filter(inGroup);
   ui.panelTitle.textContent = state.group ?? 'Ученики';
+  ui.clearGroup.hidden = state.group === null;
   ui.countDebtors.textContent = String(state.debtors.filter((d) => inGroup(studentById(d.studentId) ?? {})).length);
   ui.countAll.textContent = String(state.students.filter(inGroup).length);
   const existing = new Map([...ui.list.children].map((row) => [Number(row.dataset.id), row]));
@@ -442,8 +444,13 @@ async function loadMonth(month = state.month) {
   } catch (err) {
     if (request !== monthRequest) return;
     setServerStatus(false);
+    // Старые итоги не оставляем: после неудачного обновления они могли бы не учитывать только что внесённую оплату
     ui.summaryText.textContent = 'Нет данных';
     ui.summaryTotal.replaceChildren();
+    ui.collected.textContent = '—';
+    ui.collectedFill.style.width = '0%';
+    ui.collectedPercent.textContent = '';
+    ui.groupList.replaceChildren();
     ui.list.replaceChildren();
     showState([`Не удалось загрузить данные: ${err.message}. Проверьте, что сервер запущен, и повторите.`], { retry: true });
   } finally {
@@ -767,6 +774,11 @@ async function submitStudent(event) {
 ui.prev.addEventListener('click', () => loadMonth(shiftMonth(state.month, -1)));
 ui.next.addEventListener('click', () => loadMonth(shiftMonth(state.month, 1)));
 ui.retry.addEventListener('click', () => loadMonth());
+ui.clearGroup.addEventListener('click', () => {
+  state.group = null;
+  renderGroups();
+  renderList();
+});
 for (const button of ui.viewButtons) {
   button.addEventListener('click', () => {
     state.view = button.dataset.view;
