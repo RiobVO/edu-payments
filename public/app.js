@@ -491,6 +491,7 @@ async function openStudent(studentId) {
     : status.kind === 'paid' ? `За ${month} оплачено` : `В ${MONTHS_IN[monthIndex(state.month)]} ещё не учился`;
 
   resetDeleteConfirm();
+  card.confirmDelete.disabled = false;
   // Вопрос ставим сразу: если история ещё грузится, подтверждение не должно называть прошлого ученика
   card.question.textContent = `Удалить ученика «${student.name}» вместе с его оплатами? Это нельзя отменить.`;
   card.history.replaceChildren();
@@ -515,19 +516,24 @@ async function openStudent(studentId) {
 }
 
 async function deleteStudent() {
-  const student = studentById(state.studentId);
+  // Пока запрос в пути, карточку могут закрыть и открыть другого ученика — её тогда не трогаем
+  const session = cardSession;
+  const isCurrent = () => session === cardSession;
+  const studentId = state.studentId;
+  const student = studentById(studentId);
   ui.card.confirmDelete.disabled = true;
   try {
-    await api(`/students/${state.studentId}`, { method: 'DELETE' });
-    ui.card.dialog.close();
+    await api(`/students/${studentId}`, { method: 'DELETE' });
+    if (isCurrent()) ui.card.dialog.close();
     showToast(`Ученик удалён: ${student?.name ?? ''}`);
     await loadMonth();
   } catch (err) {
+    if (!isCurrent()) return;
     ui.card.error.textContent = err.status === 404
       ? 'Этого ученика уже нет в базе. Обновите страницу.'
       : `Ученик не удалён: ${err.message}`;
   } finally {
-    ui.card.confirmDelete.disabled = false;
+    if (isCurrent()) ui.card.confirmDelete.disabled = false;
   }
 }
 
