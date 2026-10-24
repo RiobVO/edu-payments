@@ -366,6 +366,8 @@ async function openStudent(studentId) {
     : status.kind === 'paid' ? `За ${month} оплачено` : `В ${MONTHS_IN[monthIndex(state.month)]} ещё не учился`;
 
   resetDeleteConfirm();
+  // Вопрос ставим сразу: если история ещё грузится, подтверждение не должно называть прошлого ученика
+  card.question.textContent = `Удалить ученика «${student.name}» вместе с его оплатами? Это нельзя отменить.`;
   card.history.replaceChildren();
   card.historyState.textContent = 'Загружаем оплаты…';
   showDialog(card.dialog);
@@ -384,7 +386,6 @@ async function openStudent(studentId) {
   } catch (err) {
     if (session !== cardSession) return;
     card.historyState.textContent = `Не удалось загрузить оплаты: ${err.message}`;
-    card.question.textContent = `Удалить ученика «${student.name}» вместе с его оплатами? Это нельзя отменить.`;
   }
 }
 
@@ -456,6 +457,8 @@ async function openPayment(studentId = null) {
   if (session !== paymentSession) return;
   const { payment } = ui;
   payment.form.reset();
+  payment.submit.disabled = false;
+  payment.submit.textContent = 'Внести оплату';
   payment.error.textContent = '';
   payment.form.querySelectorAll('[aria-invalid]').forEach((node) => node.removeAttribute('aria-invalid'));
   const today = todayInCenter();
@@ -514,6 +517,9 @@ async function submitPayment(event) {
   const values = validatePayment();
   if (!values) return;
 
+  // Пока запрос в пути, форму могут закрыть и открыть заново — тогда её не трогаем
+  const session = paymentSession;
+  const isCurrent = () => session === paymentSession;
   payment.error.textContent = '';
   payment.submit.disabled = true;
   payment.submit.textContent = 'Вносим…';
@@ -522,16 +528,19 @@ async function submitPayment(event) {
       method: 'POST',
       body: JSON.stringify({ amount: values.amount, date: values.date }),
     });
-    payment.dialog.close();
+    if (isCurrent()) payment.dialog.close();
     showToast(`${studentById(values.studentId)?.name ?? 'Ученик'}: внесено ${money.format(values.amount)} сум`);
     await loadMonth();
   } catch (err) {
+    if (!isCurrent()) return;
     payment.error.textContent = err.status === 404
       ? 'Этого ученика уже нет в базе. Обновите страницу.'
       : `Оплата не внесена: ${err.message}`;
   } finally {
-    payment.submit.disabled = false;
-    payment.submit.textContent = 'Внести оплату';
+    if (isCurrent()) {
+      payment.submit.disabled = false;
+      payment.submit.textContent = 'Внести оплату';
+    }
   }
 }
 
@@ -546,13 +555,19 @@ const FIELD_ERRORS = {
   startDate: 'Укажите дату начала учёбы',
 };
 
+// Номер открытия формы ученика: ответ на прошлое сохранение не должен закрыть новую форму
+let studentFormSession = 0;
+
 async function openStudentForm(studentId = null) {
+  const session = ++studentFormSession;
   await configReady;
+  if (session !== studentFormSession) return;
   const { studentForm: f } = ui;
   const student = studentId ? studentById(studentId) : null;
   state.studentId = student?.id ?? null;
 
   f.form.reset();
+  f.submit.disabled = false;
   f.error.textContent = '';
   f.form.querySelectorAll('[aria-invalid]').forEach((node) => node.removeAttribute('aria-invalid'));
   f.title.textContent = student ? 'Изменить ученика' : 'Новый ученик';
@@ -598,6 +613,8 @@ async function submitStudent(event) {
   if (!values) return;
 
   const editingId = state.studentId;
+  const session = studentFormSession;
+  const isCurrent = () => session === studentFormSession;
   f.error.textContent = '';
   f.submit.disabled = true;
   try {
@@ -605,18 +622,24 @@ async function submitStudent(event) {
       method: editingId ? 'PATCH' : 'POST',
       body: JSON.stringify(values),
     });
-    f.dialog.close();
     showToast(editingId ? `Сохранено: ${saved.name}` : `Ученик добавлен: ${saved.name}`);
+    if (!isCurrent()) {
+      // Форму уже закрыли или открыли для другого ученика — только обновляем список
+      await loadMonth();
+      return;
+    }
+    f.dialog.close();
     await loadMonth();
     // После правки возвращаемся в карточку — там видно, как изменился долг
     if (editingId) openStudent(saved.id);
   } catch (err) {
+    if (!isCurrent()) return;
     const field = /body\/(\w+)/.exec(err.message)?.[1];
     f.error.textContent = err.status === 404
       ? 'Этого ученика уже нет в базе. Обновите страницу.'
       : `Не сохранено: ${FIELD_ERRORS[field] ?? err.message}`;
   } finally {
-    f.submit.disabled = false;
+    if (isCurrent()) f.submit.disabled = false;
   }
 }
 
@@ -641,6 +664,7 @@ for (const dialog of document.querySelectorAll('dialog')) {
 }
 ui.payment.dialog.addEventListener('close', () => { paymentSession += 1; });
 ui.card.dialog.addEventListener('close', () => { cardSession += 1; });
+ui.studentForm.dialog.addEventListener('close', () => { studentFormSession += 1; });
 
 ui.payment.student.addEventListener('change', () => {
   updatePaymentHints();
