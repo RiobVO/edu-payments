@@ -34,7 +34,7 @@ const students: [string, string, string, number, number[], number[]][] = [
 ];
 
 const insertStudent = db.prepare(
-  'INSERT INTO students (name, phone, group_name, monthly_fee, created_at) VALUES (?, ?, ?, ?, ?) RETURNING id',
+  'INSERT INTO students (name, phone, group_name, monthly_fee, start_date) VALUES (?, ?, ?, ?, ?) RETURNING id',
 );
 const insertPayment = db.prepare('INSERT INTO payments (student_id, amount, paid_at) VALUES (?, ?, ?)');
 

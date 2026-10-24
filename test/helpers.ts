@@ -18,7 +18,7 @@ export const validStudent = {
 export async function createStudent(app: FastifyInstance, overrides: Record<string, unknown> = {}) {
   const res = await app.inject({ method: 'POST', url: '/students', payload: { ...validStudent, ...overrides } });
   if (res.statusCode !== 201) throw new Error(`createStudent: ${res.statusCode} ${res.body}`);
-  return res.json() as { id: number; name: string; monthlyFee: number; createdAt: string };
+  return res.json() as { id: number; name: string; monthlyFee: number; startDate: string };
 }
 
 export async function addPayment(app: FastifyInstance, studentId: number, amount: number, date?: string) {

@@ -7,10 +7,15 @@ beforeEach(() => { app = createTestApp(); });
 afterEach(() => app.close());
 
 describe('POST /students', () => {
-  it('создаёт ученика и проставляет дату записи по Ташкенту', async () => {
+  it('без startDate считает, что ученик учится с сегодняшнего дня по Ташкенту', async () => {
     const res = await app.inject({ method: 'POST', url: '/students', payload: validStudent });
     expect(res.statusCode).toBe(201);
-    expect(res.json()).toEqual({ id: 1, ...validStudent, createdAt: '2026-10-15' });
+    expect(res.json()).toEqual({ id: 1, ...validStudent, startDate: '2026-10-15' });
+  });
+
+  it('принимает дату начала учёбы, в том числе прошлую и будущую', async () => {
+    expect((await createStudent(app, { startDate: '2026-09-01' })).startDate).toBe('2026-09-01');
+    expect((await createStudent(app, { startDate: '2026-11-01' })).startDate).toBe('2026-11-01');
   });
 
   it('обрезает пробелы по краям строк', async () => {
@@ -32,6 +37,8 @@ describe('POST /students', () => {
     ['телефон из пробелов', { phone: '       ' }],
     ['телефон без цифр', { phone: '-------' }],
     ['неизвестное поле', { comment: 'VIP' }],
+    ['несуществующая дата начала', { startDate: '2026-02-30' }],
+    ['дата начала в чужом формате', { startDate: '01.09.2026' }],
   ])('отклоняет некорректные данные: %s', async (_case, overrides) => {
     const res = await app.inject({ method: 'POST', url: '/students', payload: { ...validStudent, ...overrides } });
     expect(res.statusCode).toBe(400);
@@ -78,6 +85,12 @@ describe('PATCH /students/:id', () => {
     const res = await app.inject({ method: 'PATCH', url: `/students/${id}`, payload: { monthlyFee: 600_000 } });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ ...validStudent, monthlyFee: 600_000 });
+  });
+
+  it('меняет дату начала учёбы', async () => {
+    const { id } = await createStudent(app);
+    const res = await app.inject({ method: 'PATCH', url: `/students/${id}`, payload: { startDate: '2026-09-01' } });
+    expect(res.json().startDate).toBe('2026-09-01');
   });
 
   it('отклоняет пустое тело', async () => {

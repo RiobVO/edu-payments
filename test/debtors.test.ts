@@ -57,12 +57,22 @@ describe('GET /debtors', () => {
     expect(body.debtors[0]).toMatchObject({ paid: 200_000, debt: 300_000 });
   });
 
-  it('ученик, записавшийся позже месяца, не должен за этот месяц', async () => {
+  it('ученик, начавший учиться позже месяца, не должен за этот месяц', async () => {
     const app = createTestApp();
-    await createStudent(app); // createdAt = 2026-10-15
+    await createStudent(app); // startDate = 2026-10-15
 
     expect((await getDebtors(app, '2026-09')).body.debtors).toEqual([]);
     expect((await getDebtors(app, '2026-10')).body.debtors).toHaveLength(1);
+  });
+
+  it('учитывает дату начала учёбы, указанную вручную', async () => {
+    const app = createTestApp();
+    await createStudent(app, { name: 'С сентября', startDate: '2026-09-01' });
+    await createStudent(app, { name: 'С ноября', startDate: '2026-11-01' });
+
+    expect((await getDebtors(app, '2026-08')).body.debtors).toEqual([]);
+    expect((await getDebtors(app, '2026-09')).body.debtors.map((d: { name: string }) => d.name)).toEqual(['С сентября']);
+    expect((await getDebtors(app, '2026-11')).body.debtors).toHaveLength(2);
   });
 
   it('сортирует по убыванию долга и считает общий долг', async () => {

@@ -7,7 +7,7 @@ interface StudentRow {
   phone: string;
   group_name: string;
   monthly_fee: number;
-  created_at: string;
+  start_date: string;
 }
 
 interface StudentInput {
@@ -15,6 +15,7 @@ interface StudentInput {
   phone: string;
   group: string;
   monthlyFee: number;
+  startDate?: string;
 }
 
 const toStudent = (row: StudentRow) => ({
@@ -23,7 +24,7 @@ const toStudent = (row: StudentRow) => ({
   phone: row.phone,
   group: row.group_name,
   monthlyFee: row.monthly_fee,
-  createdAt: row.created_at,
+  startDate: row.start_date,
 });
 
 // Хотя бы один непробельный символ: ajv считает "   " валидной строкой длины 3
@@ -35,7 +36,11 @@ const studentFields = {
   phone: { type: 'string', maxLength: 30, pattern: '^\\s*\\+?(?:[ ()-]*[0-9]){7,15}[ ()-]*\\s*$' },
   group: nonBlank(50),
   monthlyFee: { type: 'integer', minimum: 1, maximum: 1_000_000_000 },
+  // Будущая дата допустима: ученика записывают заранее, со следующего месяца
+  startDate: { type: 'string', format: 'date' },
 };
+
+const requiredFields = ['name', 'phone', 'group', 'monthlyFee'];
 
 // Приведение типов выключено, поэтому id из URL проверяем как строку из цифр и переводим в число сами
 export const idParams = {
@@ -62,14 +67,14 @@ export const studentsRoutes: FastifyPluginAsync<AppDeps> = async (app, { db, tod
 
   app.post<{ Body: StudentInput }>('/students', {
     schema: {
-      body: { type: 'object', required: Object.keys(studentFields), additionalProperties: false, properties: studentFields },
+      body: { type: 'object', required: requiredFields, additionalProperties: false, properties: studentFields },
     },
   }, async (req, reply) => {
-    const { name, phone, group, monthlyFee } = req.body;
+    const { name, phone, group, monthlyFee, startDate = today() } = req.body;
     const row = db.prepare(`
-      INSERT INTO students (name, phone, group_name, monthly_fee, created_at)
+      INSERT INTO students (name, phone, group_name, monthly_fee, start_date)
       VALUES (?, ?, ?, ?, ?) RETURNING *
-    `).get(name.trim(), phone.trim(), group.trim(), monthlyFee, today()) as unknown as StudentRow;
+    `).get(name.trim(), phone.trim(), group.trim(), monthlyFee, startDate) as unknown as StudentRow;
     return reply.code(201).send(toStudent(row));
   });
 
@@ -79,17 +84,20 @@ export const studentsRoutes: FastifyPluginAsync<AppDeps> = async (app, { db, tod
       body: { type: 'object', minProperties: 1, additionalProperties: false, properties: studentFields },
     },
   }, async (req, reply) => {
-    const { name, phone, group, monthlyFee } = req.body;
+    const { name, phone, group, monthlyFee, startDate } = req.body;
     // COALESCE оставляет старое значение для полей, которых нет в запросе
     const row = db.prepare(`
       UPDATE students SET
         name        = COALESCE(?, name),
         phone       = COALESCE(?, phone),
         group_name  = COALESCE(?, group_name),
-        monthly_fee = COALESCE(?, monthly_fee)
+        monthly_fee = COALESCE(?, monthly_fee),
+        start_date  = COALESCE(?, start_date)
       WHERE id = ? RETURNING *
-    `).get(name?.trim() ?? null, phone?.trim() ?? null, group?.trim() ?? null, monthlyFee ?? null, Number(req.params.id)) as
-      StudentRow | undefined;
+    `).get(
+      name?.trim() ?? null, phone?.trim() ?? null, group?.trim() ?? null, monthlyFee ?? null, startDate ?? null,
+      Number(req.params.id),
+    ) as StudentRow | undefined;
     if (!row) return reply.code(404).send({ message: 'Student not found' });
     return toStudent(row);
   });

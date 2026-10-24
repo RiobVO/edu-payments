@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS students (
   phone       TEXT    NOT NULL,
   group_name  TEXT    NOT NULL,
   monthly_fee INTEGER NOT NULL CHECK (monthly_fee > 0),
-  created_at  TEXT    NOT NULL
+  -- С какой даты учится: за месяцы до неё долга нет
+  start_date  TEXT    NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS payments (

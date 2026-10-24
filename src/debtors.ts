@@ -14,12 +14,12 @@ interface DebtorRow {
 export const debtorsRoutes: FastifyPluginAsync<AppDeps> = async (app, { db, today }) => {
   // Условие по дате оплаты стоит в ON, а не в WHERE: иначе LEFT JOIN выбросит учеников
   // без оплат за месяц — а это как раз самые главные должники.
-  // Ученики, записавшиеся после месяца, за него не должны (created_at < начала следующего месяца).
+  // Кто начал учиться после месяца, за него не должен (start_date < начала следующего месяца).
   const query = db.prepare(`
     SELECT s.id, s.name, s.phone, s.group_name, s.monthly_fee, COALESCE(SUM(p.amount), 0) AS paid
     FROM students s
     LEFT JOIN payments p ON p.student_id = s.id AND p.paid_at >= :monthStart AND p.paid_at < :nextStart
-    WHERE s.created_at < :nextStart
+    WHERE s.start_date < :nextStart
     GROUP BY s.id
     HAVING paid < s.monthly_fee
     ORDER BY s.monthly_fee - paid DESC, s.name
