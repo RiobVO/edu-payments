@@ -577,6 +577,14 @@ svg {
 
 .sheet::backdrop { background: rgb(40 35 25 / 0.35); }
 
+/* iOS Safari прокручивает страницу под открытой шторкой: блокируем её, пока шторка открыта,
+   а прокрутку внутри шторки не передаём наружу */
+html:has(dialog[open]) { overflow: hidden; }
+.sheet { overflow-y: auto; overscroll-behavior: contain; }
+
+/* Заголовок шторки получает фокус при открытии — без кольца, оно нужно только у кнопок */
+.sheet h2[tabindex='-1']:focus { outline: none; }
+
 .sheet[open] { animation: sheet-in 0.22s ease-out; }
 
 @keyframes sheet-in {
