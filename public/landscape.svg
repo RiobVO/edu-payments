@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" preserveAspectRatio="xMidYMid slice">
+  <!-- Фон главной карточки: предгорья в акварельной манере — дальние горы, холмы, поля, дымка -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EEF0EA"/>
+      <stop offset="0.6" stop-color="#F4F0E4"/>
+      <stop offset="1" stop-color="#EDE6D2"/>
+    </linearGradient>
+    <linearGradient id="field" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E4DCC0"/>
+      <stop offset="1" stop-color="#D6CFAE"/>
+    </linearGradient>
+    <filter id="soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="softer" x="-10%" y="-20%" width="120%" height="140%"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7"/>
+      <feColorMatrix values="0 0 0 0 0.45  0 0 0 0 0.42  0 0 0 0 0.35  0 0 0 0.06 0"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="420" fill="url(#sky)"/>
+  <path filter="url(#softer)" fill="#C7D0CB" opacity="0.8"
+        d="M0 210 L120 150 L210 185 L330 105 L430 160 L520 120 L640 175 L760 95 L880 150 L990 115 L1100 160 L1200 130 L1200 300 L0 300 Z"/>
+  <path filter="url(#soft)" fill="#B9C6AE" opacity="0.85"
+        d="M0 260 C140 220 260 235 380 250 C520 268 600 215 760 225 C900 234 1010 262 1200 238 L1200 340 L0 340 Z"/>
+  <path filter="url(#soft)" fill="#A9BC9C" opacity="0.8"
+        d="M0 300 C180 270 330 290 470 300 C640 312 760 278 930 290 C1050 298 1130 286 1200 280 L1200 380 L0 380 Z"/>
+  <path filter="url(#soft)" fill="url(#field)"
+        d="M0 330 C200 315 380 335 560 338 C760 342 920 320 1200 326 L1200 420 L0 420 Z"/>
+  <g filter="url(#soft)" fill="#8FA586" opacity="0.75">
+    <ellipse cx="860" cy="292" rx="34" ry="26"/>
+    <ellipse cx="905" cy="300" rx="22" ry="18"/>
+    <ellipse cx="1040" cy="284" rx="28" ry="22"/>
+    <ellipse cx="300" cy="300" rx="18" ry="14"/>
+  </g>
+  <ellipse filter="url(#softer)" cx="600" cy="245" rx="520" ry="34" fill="#FBFAF6" opacity="0.55"/>
+  <rect width="1200" height="420" filter="url(#grain)"/>
+</svg>

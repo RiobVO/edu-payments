@@ -16,15 +16,21 @@ const ui = {
   next: $('next-month'),
   summaryText: $('summary-text'),
   summaryTotal: $('summary-total'),
+  heroBadge: $('hero-badge'),
+  heroLabel: $('hero-label'),
+  collected: $('collected'),
+  collectedFill: $('collected-fill'),
+  collectedPercent: $('collected-percent'),
+  serverStatus: $('server-status'),
   viewButtons: document.querySelectorAll('[data-view]'),
   countDebtors: $('count-debtors'),
   countAll: $('count-all'),
+  groupList: $('group-list'),
+  panelTitle: $('panel-title'),
   list: $('debtors'),
   state: $('state'),
   stateText: $('state-text'),
   retry: $('retry'),
-  openPayment: $('open-payment'),
-  openStudentForm: $('open-student-form'),
   toast: $('toast'),
   payment: {
     dialog: $('payment-dialog'),
@@ -78,6 +84,8 @@ const state = {
   month: null,
   currentMonth: null,
   view: 'debtors',
+  // Группа, выбранная в боковом списке; null — все группы
+  group: null,
   debtors: [],
   students: [],
   // Ученик, открытый в карточке или в форме редактирования
@@ -196,35 +204,68 @@ function monthStatus(student) {
   return debtor ? { kind: 'debt', debtor } : { kind: 'paid' };
 }
 
+// Ученики, которые в выбранном месяце уже учились: только с них причитается оплата
+const activeStudents = () => state.students.filter((s) => monthStatus(s).kind !== 'not-started');
+
 function renderSummary() {
   const count = state.debtors.length;
-  const monthIn = MONTHS_IN[monthIndex(state.month)];
-  ui.countDebtors.textContent = String(count);
-  ui.countAll.textContent = String(state.students.length);
+  const active = activeStudents();
+  const month = monthName(state.month);
+  const debt = state.debtors.reduce((sum, d) => sum + d.debt, 0);
+  const expected = active.reduce((sum, s) => sum + s.monthlyFee, 0);
+  // Собрано в пределах тарифов: переплата одного не закрывает долг другого
+  const collected = expected - debt;
+  const percent = expected ? Math.round((collected / expected) * 100) : 0;
+
+
+  ui.heroBadge.textContent = state.month === state.currentMonth ? 'Текущий месяц' : 'Прошедший месяц';
+  ui.heroLabel.textContent = `Осталось получить за ${month}`;
+  ui.summaryTotal.replaceChildren(money.format(debt), el('small', { text: 'сум' }));
+  ui.collected.textContent = `${money.format(collected)} / ${money.format(expected)} сум`;
+  ui.collectedFill.style.width = `${percent}%`;
+  ui.collectedPercent.textContent = `${percent}% начислений оплачено`;
+
   if (count === 0) {
-    ui.summaryText.textContent = `В ${monthIn} долгов нет`;
-    ui.summaryTotal.replaceChildren();
+    ui.summaryText.textContent = active.length ? 'Все оплатили' : 'Учеников за месяц нет';
     return;
   }
-  const form = plural.select(count);
-  const verb = form === 'one' ? 'должен' : 'должны';
-  const noun = form === 'one' ? 'ученик' : form === 'few' ? 'ученика' : 'учеников';
-  const total = state.debtors.reduce((sum, d) => sum + d.debt, 0);
-  ui.summaryText.textContent = `В ${monthIn} ${verb} ${count} ${noun}`;
-  ui.summaryTotal.replaceChildren(money.format(total), el('small', { text: 'сум' }));
+  const verb = plural.select(count) === 'one' ? 'должен' : 'должны';
+  const of = plural.select(active.length) === 'one' ? 'ученика' : 'учеников';
+  ui.summaryText.textContent = `${count} из ${active.length} ${of} ${verb}`;
+}
+
+// Пастельная плашка группы: цвет стабилен для названия, чтобы группу узнавали по цвету
+function groupTint(group) {
+  let hash = 0;
+  for (const ch of group) hash = (hash * 31 + ch.codePointAt(0)) >>> 0;
+  return String((hash % 5) + 1);
 }
 
 function buildRow() {
   const row = el('li', { class: 'debtor' });
   const main = el('button', { type: 'button', class: 'debtor-main' }, [
     el('span', { class: 'debtor-name' }),
-    el('span', { class: 'debtor-debt' }),
-    el('span', { class: 'debtor-group' }),
-    el('span', { class: 'debtor-paid' }),
-    el('span', { class: 'meter', 'aria-hidden': 'true' }, [el('span', { class: 'meter-fill' })]),
+    el('span', { class: 'debtor-sub debtor-group-inline' }),
+    el('span', { class: 'debtor-sub debtor-phone' }),
   ]);
+  const pay = el('button', { type: 'button', class: 'btn-secondary debtor-pay', text: 'Оплатить' });
+  pay.addEventListener('click', () => openPayment(Number(row.dataset.id)));
+  row.append(
+    main,
+    el('span', { class: 'cell-group' }, [el('span', { class: 'group-badge' })]),
+    el('span', { class: 'cell-fee' }),
+    el('span', { class: 'cell-paid' }, [
+      el('span', { class: 'meter', 'aria-hidden': 'true' }, [el('span', { class: 'meter-fill' })]),
+      el('span', { class: 'paid-text' }),
+    ]),
+    el('span', { class: 'debtor-debt' }, [el('span', { class: 'amount' }), el('small')]),
+    el('span', { class: 'cell-actions' }, [pay, el('a', { class: 'debtor-call' }, [phoneIcon()])]),
+  );
+  // Вся строка открывает карточку, кроме кнопок «Оплатить» и звонка
+  row.addEventListener('click', (event) => {
+    if (!event.target.closest('.cell-actions, .debtor-main')) openStudent(Number(row.dataset.id));
+  });
   main.addEventListener('click', () => openStudent(Number(row.dataset.id)));
-  row.append(main, el('a', { class: 'debtor-call' }, [phoneIcon()]));
   return row;
 }
 
@@ -232,23 +273,27 @@ function updateRow(row, student) {
   const status = monthStatus(student);
   const month = monthName(state.month);
   const fee = money.format(student.monthlyFee);
-  let right;
+  let amount;
   let below;
+  let paidText;
   let filled;
   let label;
   if (status.kind === 'debt') {
-    right = money.format(status.debtor.debt);
+    amount = `${money.format(status.debtor.debt)} сум`;
     below = `из ${fee}`;
+    paidText = `внесено ${money.format(status.debtor.paid)}`;
     filled = status.debtor.paid / student.monthlyFee;
-    label = `долг ${right} из ${fee} сум, внесено ${money.format(status.debtor.paid)}`;
+    label = `долг ${money.format(status.debtor.debt)} из ${fee} сум, внесено ${money.format(status.debtor.paid)}`;
   } else if (status.kind === 'paid') {
-    right = 'оплачено';
+    amount = 'оплачено';
     below = `${fee} в месяц`;
+    paidText = 'полностью';
     filled = 1;
     label = `за ${month} оплачено`;
   } else {
-    right = '—';
+    amount = '—';
     below = `с ${formatDate(student.startDate)}`;
+    paidText = `учится с ${formatDate(student.startDate)}`;
     filled = 0;
     label = `учится с ${formatDate(student.startDate)}, за ${month} не должен`;
   }
@@ -257,23 +302,86 @@ function updateRow(row, student) {
   row.dataset.status = status.kind;
   const main = row.querySelector('.debtor-main');
   main.querySelector('.debtor-name').textContent = student.name;
-  main.querySelector('.debtor-debt').textContent = right;
-  main.querySelector('.debtor-group').textContent = student.group;
-  main.querySelector('.debtor-paid').textContent = below;
-  main.setAttribute('aria-label', `${student.name}, ${label}. Открыть карточку`);
-  // У новой строки шкала сразу на месте; плавно растёт только у уже показанной — после оплаты
-  main.querySelector('.meter-fill').style.width = `${Math.min(100, filled * 100)}%`;
+  main.querySelector('.debtor-group-inline').textContent = student.group;
+  main.querySelector('.debtor-phone').textContent = student.phone;
+  main.setAttribute('aria-label', `${student.name}, ${student.group}, ${label}. Открыть карточку`);
 
+  const badge = row.querySelector('.group-badge');
+  badge.textContent = student.group;
+  badge.dataset.tint = groupTint(student.group);
+  row.querySelector('.cell-fee').textContent = fee;
+  row.querySelector('.paid-text').textContent = paidText;
+  // У новой строки шкала сразу на месте; плавно растёт только у уже показанной — после оплаты
+  row.querySelector('.meter-fill').style.width = `${Math.min(100, filled * 100)}%`;
+  row.querySelector('.debtor-debt .amount').textContent = amount;
+  row.querySelector('.debtor-debt small').textContent = below;
+
+  const pay = row.querySelector('.debtor-pay');
+  pay.hidden = status.kind === 'not-started';
+  pay.setAttribute('aria-label', `Внести оплату: ${student.name}`);
   const call = row.querySelector('.debtor-call');
   call.href = telHref(student.phone);
   call.setAttribute('aria-label', `Позвонить: ${student.name}, ${student.phone}`);
 }
 
+const pluralWord = (n, one, few, many) => {
+  const form = plural.select(n);
+  return form === 'one' ? one : form === 'few' ? few : many;
+};
+
+function groupButton(group, title, debt, meta) {
+  const button = el('button', { type: 'button', class: 'group-item', 'aria-pressed': String(state.group === group) }, [
+    el('span', { class: 'group-dot', 'data-tint': group ? groupTint(group) : '' }),
+    el('span', { class: 'group-name', text: title }),
+    el('span', { class: 'group-debt', text: debt > 0 ? money.format(debt) : '' }),
+    el('span', { class: `group-meta${debt === 0 ? ' clear' : ''}`, text: meta }),
+  ]);
+  button.addEventListener('click', () => {
+    state.group = group;
+    renderGroups();
+    renderList();
+  });
+  return el('li', {}, [button]);
+}
+
+// Боковой список групп: сколько учеников, сколько должны — и фильтр таблицы по клику
+function renderGroups() {
+  const groups = new Map();
+  for (const student of state.students) {
+    const item = groups.get(student.group) ?? { students: 0, debtors: 0, debt: 0 };
+    // Считаем тех, кто в этом месяце уже учится, — так же, как в карточке месяца
+    if (monthStatus(student).kind !== 'not-started') item.students += 1;
+    const debtor = debtFor(student.id);
+    if (debtor) {
+      item.debtors += 1;
+      item.debt += debtor.debt;
+    }
+    groups.set(student.group, item);
+  }
+  if (state.group !== null && !groups.has(state.group)) state.group = null;
+
+  const totalDebt = state.debtors.reduce((sum, d) => sum + d.debt, 0);
+  const meta = (debtors, students) => (debtors > 0
+    ? `${debtors} из ${students} ${debtors === 1 && plural.select(students) === 'one' ? 'должен' : 'должны'}`
+    : `${students} ${pluralWord(students, 'ученик', 'ученика', 'учеников')}, долгов нет`);
+  const items = [...groups].sort(([a], [b]) => a.localeCompare(b, 'ru'))
+    .map(([group, g]) => groupButton(group, group, g.debt, meta(g.debtors, g.students)));
+  ui.groupList.replaceChildren(
+    groupButton(null, 'Все группы', totalDebt, meta(state.debtors.length, activeStudents().length)),
+    ...items,
+  );
+}
+
 // Строки переиспользуются по id ученика: после оплаты шкала плавно дорастает, а не перерисовывается
 function renderList() {
-  const students = state.view === 'debtors'
+  const inView = state.view === 'debtors'
     ? state.debtors.map((d) => studentById(d.studentId)).filter(Boolean)
     : state.students;
+  const inGroup = (s) => state.group === null || s.group === state.group;
+  const students = inView.filter(inGroup);
+  ui.panelTitle.textContent = state.group ?? 'Ученики';
+  ui.countDebtors.textContent = String(state.debtors.filter((d) => inGroup(studentById(d.studentId) ?? {})).length);
+  ui.countAll.textContent = String(state.students.filter(inGroup).length);
   const existing = new Map([...ui.list.children].map((row) => [Number(row.dataset.id), row]));
   ui.list.replaceChildren(...students.map((student) => {
     const row = existing.get(student.id) ?? buildRow();
@@ -296,9 +404,16 @@ function renderEmptyState(shown) {
     ui.state.hidden = true;
   } else if (state.students.length === 0) {
     showState(['Учеников пока нет. Добавьте первого кнопкой «+ Ученик» или заполните демо-данными: ', el('code', { text: 'npm run seed' }), '.']);
+  } else if (state.group !== null) {
+    showState([`В группе «${state.group}» за ${monthName(state.month)} долгов нет.`]);
   } else {
     showState([`За ${monthName(state.month)} все ученики оплатили полностью.`]);
   }
+}
+
+function setServerStatus(ok) {
+  ui.serverStatus.dataset.state = ok ? 'ok' : 'error';
+  ui.serverStatus.textContent = ok ? 'Сервер на связи' : 'Нет связи с сервером';
 }
 
 // При быстром листании месяцев ответы могут прийти не по порядку — применяем только последний запрос
@@ -321,9 +436,12 @@ async function loadMonth(month = state.month) {
     ui.monthTitle.textContent = monthTitle(data.month);
     ui.next.disabled = data.month >= state.currentMonth;
     renderSummary();
+    renderGroups();
     renderList();
+    setServerStatus(true);
   } catch (err) {
     if (request !== monthRequest) return;
+    setServerStatus(false);
     ui.summaryText.textContent = 'Нет данных';
     ui.summaryTotal.replaceChildren();
     ui.list.replaceChildren();
@@ -655,8 +773,9 @@ for (const button of ui.viewButtons) {
     renderList();
   });
 }
-ui.openPayment.addEventListener('click', () => openPayment());
-ui.openStudentForm.addEventListener('click', () => openStudentForm());
+// Кнопки «Внести оплату» и «Добавить ученика» есть в меню, в карточке месяца и в нижней панели
+for (const button of document.querySelectorAll('[data-action="pay"]')) button.addEventListener('click', () => openPayment());
+for (const button of document.querySelectorAll('[data-action="add-student"]')) button.addEventListener('click', () => openStudentForm());
 
 for (const dialog of document.querySelectorAll('dialog')) {
   dialog.querySelector('[data-close]')?.addEventListener('click', () => dialog.close());

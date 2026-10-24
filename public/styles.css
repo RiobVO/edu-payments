@@ -1,51 +1,48 @@
 @font-face {
-  font-family: 'Golos Text';
-  src: url('/fonts/golos-text-cyrillic.woff2') format('woff2');
+  font-family: 'Inter';
+  src: url('/fonts/inter-cyrillic.woff2') format('woff2');
   font-weight: 400 700;
   font-display: swap;
   unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 
 @font-face {
-  font-family: 'Golos Text';
-  src: url('/fonts/golos-text-latin.woff2') format('woff2');
+  font-family: 'Inter';
+  src: url('/fonts/inter-latin.woff2') format('woff2');
   font-weight: 400 700;
   font-display: swap;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212;
 }
 
-/* Палитра — риштанская керамика: кобальт и бирюза на холодном белом */
+/* Белый фон, тёплые светлые карточки с тонкой рамкой, почти чёрные кнопки-пилюли. Тема только светлая */
 :root {
   color-scheme: light;
-  --paper: #F6F7F9;
+  --bg: #FFFFFF;
   --surface: #FFFFFF;
-  --ink: #17203A;
-  --ink-soft: #5B6478;
-  --line: #E2E5EC;
-  --accent: #2347A6;
-  --accent-bg: #2347A6;
-  --accent-ink: #FFFFFF;
-  --paid: #2E9C95;
-  --owed: #CBD4EA;
-  --danger: #B42318;
-  --radius: 14px;
+  --surface-2: #F8F7F4;
+  --ink: #2B2A27;
+  --ink-soft: #6F6C64;
+  --ink-faint: #9C998F;
+  --line: #ECE9E1;
+  --line-strong: #DEDAD0;
+  --dark: #34332F;
+  --dark-ink: #FFFFFF;
+  --accent: #2F5FD0;
+  --accent-soft: #EAF0FC;
+  --paid: #7FA98F;
+  --paid-ink: #3F7A55;
+  --owed: #E6E2D8;
+  --danger: #B4372B;
+  --shadow: 0 1px 2px rgb(60 50 30 / 0.04), 0 8px 24px rgb(60 50 30 / 0.06);
+  --radius: 16px;
+  --radius-sm: 10px;
   --bar-height: calc(76px + env(safe-area-inset-bottom, 0px));
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --paper: #0E1424;
-    --surface: #151D33;
-    --ink: #E8ECF5;
-    --ink-soft: #9AA3B8;
-    --line: #26304A;
-    --accent: #8FA8FF;
-    --accent-bg: #3557C4;
-    --paid: #3FBDB4;
-    --owed: #2E3A5C;
-    --danger: #FF8A80;
-  }
+  /* Пастельные плашки групп */
+  --tint-1: #E7EEF9; --tint-1-ink: #3A5A8C;
+  --tint-2: #F6EEDA; --tint-2-ink: #82642A;
+  --tint-3: #F5E4D8; --tint-3-ink: #8A5135;
+  --tint-4: #ECE8F6; --tint-4-ink: #5B4E8A;
+  --tint-5: #E4EEE6; --tint-5-ink: #3F6A4B;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -54,10 +51,10 @@ html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
-  background: var(--paper);
+  background: var(--bg);
   color: var(--ink);
-  font: 400 1rem/1.5 'Golos Text', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  font-variant-numeric: tabular-nums;
+  font: 400 0.9375rem/1.5 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-feature-settings: 'tnum' 1, 'cv11' 1;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -75,143 +72,80 @@ button, input, select { font: inherit; color: inherit; }
 }
 
 :focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 svg {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
+  flex: none;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
+  stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-/* Раскладка: на телефоне одна колонка и кнопка оплаты прибита к низу экрана */
-.page {
-  max-width: 34rem;
-  margin: 0 auto;
-  padding: max(12px, env(safe-area-inset-top, 0px)) 16px calc(var(--bar-height) + 24px);
+/* Мелкие подписи капсом — как в дашбордах: «СОБРАНО», заголовки колонок */
+.caps, .table-head {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
 }
 
-.masthead { padding-block: 4px 20px; }
+.badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border: 1px solid var(--line);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
 
-.month-nav {
-  display: flex;
+/* ——— Кнопки ——— */
+
+.btn-primary, .btn-secondary, .btn-danger {
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  margin-inline: -10px;
-}
-
-.month-nav h1 {
-  flex: 1;
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.icon-btn {
-  display: inline-grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--accent);
-  cursor: pointer;
-}
-
-.icon-btn:hover { background: var(--line); }
-.icon-btn:disabled { color: var(--line); cursor: default; background: transparent; }
-
-.summary {
-  margin: 28px 0 0;
-  display: grid;
-  gap: 2px;
-}
-
-.summary-text {
-  font-size: 1.125rem;
-  color: var(--ink-soft);
-}
-
-/* Сумма долга — главный элемент страницы, поэтому только ей достаётся крупный кегль */
-.summary-total {
-  font-size: clamp(2.5rem, 12vw, 3.75rem);
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-}
-
-.summary-total:empty { display: none; }
-
-.summary-total small {
-  font-size: 0.4em;
-  font-weight: 600;
-  letter-spacing: 0;
-  color: var(--ink-soft);
-  margin-left: 0.3em;
-}
-
-.action-bar {
-  position: fixed;
-  inset: auto 0 0;
-  z-index: 5;
-  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-  background: color-mix(in srgb, var(--paper) 88%, transparent);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid var(--line);
-}
-
-.actions {
-  display: flex;
+  justify-content: center;
   gap: 8px;
-}
-
-.actions .btn-primary { flex: 1; }
-
-.action-bar .actions {
-  max-width: 32rem;
-  margin: 0 auto;
-}
-
-.btn-primary, .btn-secondary {
-  min-height: 52px;
-  padding: 0 24px;
-  border-radius: var(--radius);
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
   font-weight: 600;
+  font-size: 0.9375rem;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .btn-primary {
   border: 0;
-  background: var(--accent-bg);
-  color: var(--accent-ink);
+  background: var(--dark);
+  color: var(--dark-ink);
 }
 
-.btn-primary:hover { filter: brightness(1.08); }
-.btn-primary:disabled { opacity: 0.6; cursor: progress; }
+.btn-primary:hover { opacity: 0.88; }
+.btn-primary:disabled { opacity: 0.55; cursor: progress; }
 
 .btn-secondary {
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   background: var(--surface);
-  color: var(--accent);
+  color: var(--ink);
 }
 
+.btn-secondary:hover { background: var(--surface-2); }
+
 .btn-danger {
-  min-height: 52px;
-  padding: 0 24px;
   border: 0;
-  border-radius: var(--radius);
   background: var(--danger);
-  color: var(--surface);
-  font-weight: 600;
-  cursor: pointer;
+  color: #FFFFFF;
 }
 
 .btn-text {
@@ -224,66 +158,277 @@ svg {
 
 .btn-text.danger { color: var(--danger); }
 
-/* Переключатель «Должники | Все ученики»: сегменты одной ширины, выбранный — на белой подложке */
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+.icon-btn:disabled { color: var(--line-strong); cursor: default; background: transparent; }
+
+.icon-btn.round {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.icon-btn.round svg { width: 15px; height: 15px; }
+
+/* ——— Каркас: на телефоне одна колонка и кнопки внизу, на широком экране — боковое меню ——— */
+
+.sidebar { display: none; }
+
+.main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 16px calc(var(--bar-height) + 24px);
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.crumbs {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+
+.crumbs span { margin: 0 4px; color: var(--ink-faint); }
+
+.topbar h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  font-weight: 600;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.month-nav .icon-btn { width: 32px; height: 32px; }
+.month-nav span { min-width: 7.5em; text-align: center; }
+
+/* ——— Главная карточка с пейзажем ——— */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 18px 18px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  isolation: isolate;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: url('/landscape.svg') center 70% / cover no-repeat;
+}
+
+.hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* На телефоне кнопка оплаты есть внизу экрана — в карточке она бы дублировала её */
+.hero-pay { display: none; }
+
+.hero-label {
+  margin: 14px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+}
+
+/* Сумма долга — главный элемент страницы */
+.hero-total {
+  margin: 0;
+  font-size: clamp(2.25rem, 10vw, 3.25rem);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.hero-total small {
+  margin-left: 0.25em;
+  font-size: 0.4em;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+}
+
+.hero-meter-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.hero-meter-head #collected { border-bottom: 1px dashed var(--line-strong); }
+
+.meter {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--owed);
+}
+
+.meter-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--paid);
+  transition: width 0.5s ease-out;
+}
+
+.hero-meter { height: 8px; margin-top: 8px; background: color-mix(in srgb, var(--surface) 65%, transparent); border: 1px solid var(--line); }
+
+.hero-legend {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 8px;
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+
+.legend::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 2px;
+  background: var(--paid);
+}
+
+/* ——— Панель со списком ——— */
+
+.panel {
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.panel-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
 .view-switch {
   display: flex;
-  gap: 4px;
-  margin-bottom: 12px;
-  padding: 4px;
-  border-radius: var(--radius);
-  background: var(--line);
+  gap: 6px;
 }
 
 .view-switch button {
-  flex: 1;
-  min-height: 40px;
-  border: 0;
-  border-radius: 10px;
-  background: none;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
   color: var(--ink-soft);
+  font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
 }
 
 .view-switch button[aria-pressed='true'] {
-  background: var(--surface);
-  color: var(--ink);
+  border-color: var(--dark);
+  background: var(--dark);
+  color: var(--dark-ink);
 }
 
-.view-switch span { font-weight: 400; color: var(--ink-soft); }
+.view-switch span { margin-left: 2px; font-weight: 500; opacity: 0.7; }
 
-/* Список должников — строки с разделителями, а не карточки: так он читается как ведомость */
+.table-head { display: none; }
+
 .debtors {
   list-style: none;
   margin: 0;
   padding: 0;
-  border-top: 1px solid var(--line);
   transition: opacity 0.2s;
 }
 
 .debtors[aria-busy='true'] { opacity: 0.45; }
 
+/* Строка на телефоне: имя и группа слева, остаток справа, шкала под ними */
 .debtor {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'who debt call'
+    'meter meter meter';
   align-items: center;
-  gap: 8px;
+  gap: 8px 12px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--line);
+  cursor: pointer;
 }
 
+.debtor:last-child { border-bottom: 0; }
+.debtor:hover { background: var(--surface-2); }
+
 .debtor-main {
-  flex: 1;
-  min-width: 0;
+  grid-area: who;
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 2px 12px;
-  padding: 14px 0;
+  gap: 2px;
+  min-width: 0;
+  padding: 0;
   border: 0;
   background: none;
   text-align: left;
   cursor: pointer;
 }
-
-.debtor-main:hover .debtor-name { color: var(--accent); }
 
 .debtor-name {
   font-weight: 600;
@@ -292,76 +437,119 @@ svg {
   white-space: nowrap;
 }
 
-.debtor-debt {
-  font-weight: 650;
-  text-align: right;
-}
-
-.debtor-group, .debtor-paid {
-  font-size: 0.875rem;
+.debtor-sub {
+  font-size: 0.8125rem;
   color: var(--ink-soft);
-}
-
-.debtor-group {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.debtor-paid { text-align: right; }
+.debtor-phone { display: none; }
 
-/* Шкала оплаты: бирюзой — внесённое, штриховкой — недостающее, как в бумажной ведомости */
-.meter {
-  grid-column: 1 / -1;
-  height: 6px;
-  margin-top: 8px;
-  border-radius: 3px;
-  overflow: hidden;
-  background: repeating-linear-gradient(-45deg, var(--owed) 0 3px, transparent 3px 6px);
-}
+.cell-group, .cell-fee, .debtor-pay { display: none; }
 
-.meter-fill {
-  display: block;
-  height: 100%;
-  background: var(--paid);
-  border-radius: 3px;
-  transition: width 0.5s ease-out;
-}
+.cell-paid { grid-area: meter; display: block; }
+.cell-paid .paid-text { display: none; }
 
-.debtor[data-status='paid'] .debtor-debt { color: var(--paid); font-weight: 600; }
-.debtor[data-status='not-started'] .debtor-debt { color: var(--ink-soft); font-weight: 400; }
-/* Ещё не начал учиться — штриховка «недоплачено» здесь вводила бы в заблуждение */
-.debtor[data-status='not-started'] .meter { visibility: hidden; }
-
-.debtor-call {
-  flex: none;
+.debtor-debt {
+  grid-area: debt;
   display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  color: var(--accent);
+  justify-items: end;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-.debtor-call svg { width: 20px; height: 20px; }
-
-.state {
-  padding: 32px 0;
+.debtor-debt small {
+  font-size: 0.8125rem;
+  font-weight: 400;
   color: var(--ink-soft);
 }
 
-.state p { margin: 0 0 16px; max-width: 32ch; }
+.debtor[data-status='paid'] .debtor-debt .amount { color: var(--paid-ink); }
+.debtor[data-status='not-started'] .debtor-debt .amount { color: var(--ink-faint); font-weight: 400; }
+/* Ещё не начал учиться — пустая шкала читалась бы как долг */
+.debtor[data-status='not-started'] .meter { visibility: hidden; }
+
+.cell-actions { grid-area: call; display: flex; align-items: center; gap: 6px; }
+
+.debtor-call {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  color: var(--ink-soft);
+}
+
+.debtor-call:hover { color: var(--ink); background: var(--surface); }
+.debtor-call svg { width: 16px; height: 16px; }
+
+.group-badge {
+  display: inline-block;
+  max-width: 100%;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.group-badge[data-tint='1'] { background: var(--tint-1); color: var(--tint-1-ink); }
+.group-badge[data-tint='2'] { background: var(--tint-2); color: var(--tint-2-ink); }
+.group-badge[data-tint='3'] { background: var(--tint-3); color: var(--tint-3-ink); }
+.group-badge[data-tint='4'] { background: var(--tint-4); color: var(--tint-4-ink); }
+.group-badge[data-tint='5'] { background: var(--tint-5); color: var(--tint-5-ink); }
+
+.state {
+  padding: 28px 16px;
+  color: var(--ink-soft);
+}
+
+.state p { margin: 0 0 16px; max-width: 40ch; }
 
 .state code {
   font-size: 0.9em;
   padding: 1px 6px;
   border-radius: 6px;
-  background: var(--line);
+  background: var(--surface-2);
   color: var(--ink);
 }
 
-/* Форма оплаты: на телефоне — шторка снизу, на широком экране — окно по центру */
+.foot-note {
+  margin: 16px 4px 0;
+  font-size: 0.8125rem;
+  color: var(--ink-faint);
+}
+
+/* ——— Нижняя панель кнопок на телефоне ——— */
+
+.action-bar {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 5;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--line);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actions .btn-primary { flex: 1; }
+
+.action-bar .actions { max-width: 34rem; margin: 0 auto; }
+.action-bar .btn-primary, .action-bar .btn-secondary { min-height: 50px; }
+
+/* ——— Шторки ——— */
+
 .sheet {
   width: 100%;
   max-width: 100%;
@@ -374,7 +562,7 @@ svg {
   color: var(--ink);
 }
 
-.sheet::backdrop { background: rgb(10 15 30 / 0.45); }
+.sheet::backdrop { background: rgb(40 35 25 / 0.35); }
 
 .sheet[open] { animation: sheet-in 0.22s ease-out; }
 
@@ -382,131 +570,57 @@ svg {
   from { transform: translateY(24px); opacity: 0; }
 }
 
-.payment-form {
+.payment-form, .student-card {
   display: grid;
-  gap: 18px;
-  padding: 8px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  gap: 16px;
+  padding: 12px 16px calc(20px + env(safe-area-inset-bottom, 0px));
 }
 
 .sheet-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-right: -10px;
+  gap: 12px;
+  margin-right: -6px;
 }
 
 .sheet-head h2 {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 650;
+  font-size: 1.375rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
 }
+
+.sheet-sub { margin: 4px 0 0; }
 
 .field { display: grid; gap: 6px; }
 
 .field label {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--ink-soft);
 }
 
 .field input, .field select {
   width: 100%;
-  min-height: 52px;
+  min-height: 46px;
   padding: 0 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--paper);
-  font-size: 1.0625rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 1rem;
 }
+
+.field input:focus, .field select:focus { border-color: var(--ink-soft); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
 
 .field input[aria-invalid='true'], .field select[aria-invalid='true'] { border-color: var(--danger); }
 
-#payment-amount { font-size: 1.375rem; font-weight: 650; }
-
-/* Карточка ученика */
-.student-card {
-  display: grid;
-  gap: 18px;
-  padding: 8px 16px calc(20px + env(safe-area-inset-bottom, 0px));
-}
-
-.sheet-head h2 { overflow-wrap: anywhere; }
-
-.sheet-sub {
-  margin: 2px 0 0;
-  color: var(--ink-soft);
-}
-
-/* Значения не рвутся посреди номера или даты: целые колонки переносятся на новую строку */
-.facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 28px;
-  margin: 0;
-}
-
-.facts dt {
-  font-size: 0.8125rem;
-  color: var(--ink-soft);
-}
-
-.facts dd {
-  margin: 2px 0 0;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.facts a { color: var(--accent); text-decoration: none; }
-
-.month-status {
-  margin: 0;
-  padding: 12px 14px;
-  border-radius: var(--radius);
-  background: var(--paper);
-  font-weight: 600;
-}
-
-.month-status[data-status='debt'] { color: var(--ink); }
-.month-status[data-status='paid'] { color: var(--paid); }
-.month-status[data-status='not-started'] { color: var(--ink-soft); font-weight: 400; }
-
-.history h3 {
-  margin: 0 0 4px;
-  font-size: 1rem;
-  font-weight: 650;
-}
-
-.history ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.history li {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--line);
-}
-
-.history li:last-child { border-bottom: 0; }
-
-.danger-zone {
-  padding-top: 8px;
-  border-top: 1px solid var(--line);
-}
-
-.confirm p {
-  margin: 8px 0 12px;
-  font-weight: 600;
-}
-
-.confirm .btn-danger { flex: 1; }
+#payment-amount, #sf-fee { font-size: 1.25rem; font-weight: 600; }
 
 .hint {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--ink-soft);
 }
 
@@ -519,22 +633,80 @@ svg {
 }
 
 .quick-fill button {
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
   background: var(--surface);
-  color: var(--accent);
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.8125rem;
   cursor: pointer;
 }
+
+.quick-fill button:hover { background: var(--surface-2); }
 
 .form-error {
   margin: 0;
   color: var(--danger);
   font-weight: 600;
+  font-size: 0.875rem;
 }
+
+.payment-form > .btn-primary { min-height: 50px; }
+
+/* Карточка ученика */
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  margin: 0;
+}
+
+.facts dt { font-size: 0.75rem; color: var(--ink-soft); }
+
+.facts dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.facts a { color: var(--accent); text-decoration: none; }
+
+.month-status {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-weight: 600;
+}
+
+.month-status[data-status='paid'] { color: var(--paid-ink); }
+.month-status[data-status='not-started'] { color: var(--ink-soft); font-weight: 400; }
+
+.history h3 {
+  margin: 0 0 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.history ul { list-style: none; margin: 0; padding: 0; }
+
+.history li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.history li:last-child { border-bottom: 0; }
+
+.danger-zone { padding-top: 8px; border-top: 1px solid var(--line); }
+.confirm p { margin: 8px 0 12px; font-weight: 600; }
+.confirm .btn-danger { flex: 1; }
 
 .toast {
   position: fixed;
@@ -542,51 +714,199 @@ svg {
   right: 16px;
   bottom: calc(var(--bar-height) + 12px);
   z-index: 20;
-  max-width: 30rem;
+  max-width: 28rem;
   margin: 0 auto;
-  padding: 14px 18px;
-  border-radius: var(--radius);
-  background: var(--ink);
-  color: var(--paper);
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: var(--dark);
+  color: var(--dark-ink);
   font-weight: 600;
+  text-align: center;
   animation: sheet-in 0.2s ease-out;
 }
 
-/* Широкий экран: сводка и кнопка слева, ведомость справа */
-@media (min-width: 900px) {
-  .page {
-    max-width: 64rem;
+/* ——— Широкий экран: боковое меню, таблица с колонками ——— */
+@media (min-width: 1024px) {
+  .app {
     display: grid;
-    grid-template-columns: 22rem 1fr;
-    gap: 64px;
-    padding-top: 40px;
-    padding-bottom: 48px;
+    grid-template-columns: 236px 1fr;
+    min-height: 100vh;
   }
 
-  .masthead {
+  .sidebar {
     position: sticky;
-    top: 40px;
-    align-self: start;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px 14px 20px 24px;
+    isolation: isolate;
   }
 
-  .action-bar {
-    position: static;
-    margin-top: 32px;
-    padding: 0;
-    background: none;
-    backdrop-filter: none;
+  .sidebar > * { margin: 0; }
+
+  /* Подложка меню отстоит от краёв окна — меню выглядит отдельной карточкой */
+  .sidebar::before {
+    content: '';
+    position: absolute;
+    inset: 10px 0 10px 10px;
+    z-index: -1;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+  }
+
+  .brand {
+    padding: 2px 8px 18px;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+    font-size: 1.5rem;
+    font-weight: 650;
+    letter-spacing: -0.03em;
+    text-decoration: none;
+  }
+
+  .brand-dot { color: var(--paid); }
+
+  .groups { display: grid; gap: 8px; min-height: 0; overflow-y: auto; }
+  .groups h2 { margin: 0; padding: 0 8px; }
+
+  .group-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+
+  /* Название группы на всю ширину, под ним — сколько должны и сумма долга */
+  .group-item {
+    display: grid;
+    grid-template-columns: 10px minmax(0, 1fr) auto;
+    grid-template-areas: 'dot name name' '. meta debt';
+    gap: 2px 10px;
+    align-items: center;
+    width: 100%;
+    padding: 8px;
     border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .group-item:hover { background: var(--surface); }
+  .group-item[aria-pressed='true'] { background: var(--surface); box-shadow: 0 0 0 1px var(--line-strong); }
+
+  .group-dot { grid-area: dot; width: 10px; height: 10px; border-radius: 3px; background: var(--line-strong); }
+  .group-dot[data-tint='1'] { background: var(--tint-1-ink); }
+  .group-dot[data-tint='2'] { background: var(--tint-2-ink); }
+  .group-dot[data-tint='3'] { background: var(--tint-3-ink); }
+  .group-dot[data-tint='4'] { background: var(--tint-4-ink); }
+  .group-dot[data-tint='5'] { background: var(--tint-5-ink); }
+
+  .group-name {
+    grid-area: name;
+    font-size: 0.875rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .group-debt { grid-area: debt; font-size: 0.75rem; font-weight: 600; }
+
+  .group-meta {
+    grid-area: meta;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+  }
+
+  .group-meta.clear { color: var(--paid-ink); }
+
+  .status {
+    margin-top: auto !important;
+    padding: 12px 6px 0;
+    border-top: 1px solid var(--line);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+  }
+
+  .status::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 8px;
+    border-radius: 50%;
+    background: var(--ink-faint);
+    vertical-align: 1px;
+  }
+
+  .status[data-state='ok']::before { background: #3FA36B; }
+  .status[data-state='error']::before { background: var(--danger); }
+
+  .main { width: 100%; padding: 28px 40px 48px; }
+
+  .topbar { margin-bottom: 22px; }
+  .topbar h1 { font-size: 2rem; }
+
+  .hero { padding: 24px 28px 22px; }
+  .hero-pay { display: inline-flex; min-height: 38px; padding: 0 16px; font-size: 0.875rem; }
+  .hero-total { font-size: 3.5rem; }
+
+  .action-bar { display: none; }
+
+  .panel { margin-top: 20px; }
+  .panel-head { padding: 16px 20px; }
+
+  /* Строки превращаются в таблицу с колонками */
+  .table-head, .debtor {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) 7.5rem minmax(0, 1.3fr) 8.5rem 9.5rem;
+    grid-template-areas: none;
+    align-items: center;
+    gap: 16px;
+    padding: 0 20px;
+  }
+
+  .table-head {
+    min-height: 40px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .table-head span:nth-child(3), .table-head span:nth-child(5) { text-align: right; }
+
+  .debtor { min-height: 64px; padding-block: 10px; }
+
+  .debtor-main, .cell-paid, .debtor-debt, .cell-actions { grid-area: auto; }
+
+  .debtor-group-inline { display: none; }
+  .debtor-phone { display: block; }
+
+  .cell-group, .cell-fee { display: block; min-width: 0; }
+  .cell-fee { text-align: right; color: var(--ink-soft); }
+
+  .cell-paid { display: grid; gap: 4px; }
+  .cell-paid .paid-text { display: block; font-size: 0.8125rem; color: var(--ink-soft); }
+
+  .debtor-debt small { display: none; }
+
+  .cell-actions { justify-content: flex-end; }
+
+  .debtor-pay {
+    display: inline-flex;
+    min-height: 32px;
+    padding: 0 14px;
+    font-size: 0.8125rem;
   }
 
   .toast { bottom: 24px; }
 
   .sheet {
-    max-width: 28rem;
+    max-width: 30rem;
     margin: auto;
     border-radius: 20px;
+    box-shadow: var(--shadow);
   }
 
-  .payment-form, .student-card { padding: 16px 24px 24px; }
+  .payment-form, .student-card { padding: 20px 24px 24px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

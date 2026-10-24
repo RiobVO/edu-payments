@@ -3,53 +3,96 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#F6F7F9" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0E1424" media="(prefers-color-scheme: dark)">
-  <title>Должники — учёт оплат</title>
+  <meta name="theme-color" content="#FFFFFF">
+  <title>Оплаты — учебный центр</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="preload" href="/fonts/golos-text-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/inter-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css">
   <script type="module" src="/app.js"></script>
 </head>
 <body>
-  <main class="page">
-    <header class="masthead">
-      <nav class="month-nav" aria-label="Выбор месяца">
-        <button type="button" class="icon-btn" id="prev-month" aria-label="Предыдущий месяц">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
-        </button>
-        <h1 id="month-title">Должники</h1>
-        <button type="button" class="icon-btn" id="next-month" aria-label="Следующий месяц">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
-        </button>
-      </nav>
+  <div class="app">
+    <aside class="sidebar" aria-label="Группы">
+      <a class="brand" href="/">учёт<span class="brand-dot">.</span></a>
 
-      <p class="summary" id="summary" aria-live="polite">
-        <span class="summary-text" id="summary-text">Загружаем должников…</span>
-        <span class="summary-total" id="summary-total"></span>
-      </p>
+      <section class="groups" aria-labelledby="groups-title">
+        <h2 class="caps" id="groups-title">Группы</h2>
+        <ul class="group-list" id="group-list"></ul>
+      </section>
 
-      <div class="action-bar">
-        <div class="actions">
-          <button type="button" class="btn-secondary" id="open-student-form">+ Ученик</button>
-          <button type="button" class="btn-primary" id="open-payment">Внести оплату</button>
+      <p class="status" id="server-status" data-state="pending">Подключаемся…</p>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="crumbs">Учебный центр <span aria-hidden="true">/</span> Оплаты</p>
+          <h1>Оплаты</h1>
         </div>
-      </div>
-    </header>
+        <nav class="month-nav" aria-label="Выбор месяца">
+          <button type="button" class="icon-btn" id="prev-month" aria-label="Предыдущий месяц">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <span id="month-title" aria-live="polite">…</span>
+          <button type="button" class="icon-btn" id="next-month" aria-label="Следующий месяц">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </nav>
+      </header>
 
-    <section class="debtors-section" aria-labelledby="debtors-heading">
-      <h2 id="debtors-heading" class="visually-hidden">Ученики за месяц</h2>
-      <div class="view-switch" role="group" aria-label="Кого показать">
-        <button type="button" data-view="debtors" aria-pressed="true">Должники <span id="count-debtors"></span></button>
-        <button type="button" data-view="all" aria-pressed="false">Все ученики <span id="count-all"></span></button>
-      </div>
-      <ul class="debtors" id="debtors"></ul>
-      <div class="state" id="state" hidden>
-        <p id="state-text"></p>
-        <button type="button" class="btn-secondary" id="retry" hidden>Повторить</button>
-      </div>
-    </section>
-  </main>
+      <section class="hero" aria-labelledby="hero-label">
+        <div class="hero-top">
+          <span class="badge" id="hero-badge">Месяц</span>
+          <button type="button" class="btn-primary hero-pay" data-action="pay">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18"/></svg>
+            Внести оплату
+          </button>
+        </div>
+        <p class="hero-label" id="hero-label">Осталось получить</p>
+        <p class="hero-total" id="summary-total" aria-live="polite"></p>
+        <div class="hero-meter-head">
+          <span class="caps">Собрано</span>
+          <span id="collected"></span>
+        </div>
+        <div class="meter hero-meter" aria-hidden="true"><span class="meter-fill" id="collected-fill"></span></div>
+        <div class="hero-legend">
+          <span class="legend" id="collected-percent"></span>
+          <span id="summary-text">Загружаем…</span>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="debtors-heading">
+        <div class="panel-head">
+          <h2 id="debtors-heading"><span id="panel-title">Ученики</span>
+            <button type="button" class="icon-btn round" data-action="add-student" aria-label="Добавить ученика">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+          </h2>
+          <div class="view-switch" role="group" aria-label="Кого показать">
+            <button type="button" data-view="debtors" aria-pressed="true">Должники <span id="count-debtors"></span></button>
+            <button type="button" data-view="all" aria-pressed="false">Все <span id="count-all"></span></button>
+          </div>
+        </div>
+        <div class="table-head" aria-hidden="true">
+          <span>Ученик</span><span>Группа</span><span>В месяц</span><span>Внесено</span><span>Остаток</span><span></span>
+        </div>
+        <ul class="debtors" id="debtors"></ul>
+        <div class="state" id="state" hidden>
+          <p id="state-text"></p>
+          <button type="button" class="btn-secondary" id="retry" hidden>Повторить</button>
+        </div>
+      </section>
+
+      <p class="foot-note">Оплата засчитывается в месяц своей даты. Суммы в сумах.</p>
+    </main>
+  </div>
+
+  <div class="action-bar">
+    <div class="actions">
+      <button type="button" class="btn-secondary" id="open-student-form" data-action="add-student">+ Ученик</button>
+      <button type="button" class="btn-primary" id="open-payment" data-action="pay">Внести оплату</button>
+    </div>
+  </div>
 
   <dialog class="sheet" id="payment-dialog" aria-labelledby="payment-title">
     <form class="payment-form" id="payment-form" novalidate>
