@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F6F7F9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0E1424" media="(prefers-color-scheme: dark)">
+  <title>Должники — учёт оплат</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/golos-text-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <main class="page">
+    <header class="masthead">
+      <nav class="month-nav" aria-label="Выбор месяца">
+        <button type="button" class="icon-btn" id="prev-month" aria-label="Предыдущий месяц">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <h1 id="month-title">Должники</h1>
+        <button type="button" class="icon-btn" id="next-month" aria-label="Следующий месяц">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </nav>
+
+      <p class="summary" id="summary" aria-live="polite">
+        <span class="summary-text" id="summary-text">Загружаем должников…</span>
+        <span class="summary-total" id="summary-total"></span>
+      </p>
+
+      <div class="action-bar">
+        <button type="button" class="btn-primary" id="open-payment">Внести оплату</button>
+      </div>
+    </header>
+
+    <section class="debtors-section" aria-labelledby="debtors-heading">
+      <h2 id="debtors-heading" class="visually-hidden">Список должников</h2>
+      <ul class="debtors" id="debtors"></ul>
+      <div class="state" id="state" hidden>
+        <p id="state-text"></p>
+        <button type="button" class="btn-secondary" id="retry" hidden>Повторить</button>
+      </div>
+    </section>
+  </main>
+
+  <dialog class="sheet" id="payment-dialog" aria-labelledby="payment-title">
+    <form class="payment-form" id="payment-form" novalidate>
+      <div class="sheet-head">
+        <h2 id="payment-title">Новая оплата</h2>
+        <button type="button" class="icon-btn" id="close-payment" aria-label="Закрыть">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+
+      <div class="field">
+        <label for="payment-student">Ученик</label>
+        <select id="payment-student" name="studentId" required>
+          <option value="">Выберите ученика</option>
+        </select>
+        <p class="hint" id="student-hint"></p>
+      </div>
+
+      <div class="field">
+        <label for="payment-amount">Сумма, сум</label>
+        <input id="payment-amount" name="amount" inputmode="numeric" autocomplete="off" placeholder="0" required>
+        <div class="quick-fill" id="quick-fill"></div>
+      </div>
+
+      <div class="field">
+        <label for="payment-date">Дата оплаты</label>
+        <input id="payment-date" name="date" type="date" required>
+        <p class="hint" id="date-hint"></p>
+      </div>
+
+      <p class="form-error" id="payment-error" role="alert"></p>
+
+      <button type="submit" class="btn-primary" id="submit-payment">Внести оплату</button>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

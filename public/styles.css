@@ -1,0 +1,457 @@
+@font-face {
+  font-family: 'Golos Text';
+  src: url('/fonts/golos-text-cyrillic.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: swap;
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: 'Golos Text';
+  src: url('/fonts/golos-text-latin.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212;
+}
+
+/* Палитра — риштанская керамика: кобальт и бирюза на холодном белом */
+:root {
+  color-scheme: light;
+  --paper: #F6F7F9;
+  --surface: #FFFFFF;
+  --ink: #17203A;
+  --ink-soft: #5B6478;
+  --line: #E2E5EC;
+  --accent: #2347A6;
+  --accent-bg: #2347A6;
+  --accent-ink: #FFFFFF;
+  --paid: #2E9C95;
+  --owed: #CBD4EA;
+  --danger: #B42318;
+  --radius: 14px;
+  --bar-height: calc(76px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --paper: #0E1424;
+    --surface: #151D33;
+    --ink: #E8ECF5;
+    --ink-soft: #9AA3B8;
+    --line: #26304A;
+    --accent: #8FA8FF;
+    --accent-bg: #3557C4;
+    --paid: #3FBDB4;
+    --owed: #2E3A5C;
+    --danger: #FF8A80;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 1rem/1.5 'Golos Text', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select { font: inherit; color: inherit; }
+
+[hidden] { display: none !important; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Раскладка: на телефоне одна колонка и кнопка оплаты прибита к низу экрана */
+.page {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: max(12px, env(safe-area-inset-top, 0px)) 16px calc(var(--bar-height) + 24px);
+}
+
+.masthead { padding-block: 4px 20px; }
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline: -10px;
+}
+
+.month-nav h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.icon-btn:hover { background: var(--line); }
+.icon-btn:disabled { color: var(--line); cursor: default; background: transparent; }
+
+.summary {
+  margin: 28px 0 0;
+  display: grid;
+  gap: 2px;
+}
+
+.summary-text {
+  font-size: 1.125rem;
+  color: var(--ink-soft);
+}
+
+/* Сумма долга — главный элемент страницы, поэтому только ей достаётся крупный кегль */
+.summary-total {
+  font-size: clamp(2.5rem, 12vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.summary-total:empty { display: none; }
+
+.summary-total small {
+  font-size: 0.4em;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+  margin-left: 0.3em;
+}
+
+.action-bar {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 5;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--line);
+}
+
+.action-bar .btn-primary {
+  display: block;
+  width: 100%;
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+.btn-primary, .btn-secondary {
+  min-height: 52px;
+  padding: 0 24px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary {
+  border: 0;
+  background: var(--accent-bg);
+  color: var(--accent-ink);
+}
+
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-primary:disabled { opacity: 0.6; cursor: progress; }
+
+.btn-secondary {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--accent);
+}
+
+/* Список должников — строки с разделителями, а не карточки: так он читается как ведомость */
+.debtors {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+  transition: opacity 0.2s;
+}
+
+.debtors[aria-busy='true'] { opacity: 0.45; }
+
+.debtor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.debtor-main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  padding: 14px 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.debtor-main:hover .debtor-name { color: var(--accent); }
+
+.debtor-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.debtor-debt {
+  font-weight: 650;
+  text-align: right;
+}
+
+.debtor-group, .debtor-paid {
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+.debtor-group {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.debtor-paid { text-align: right; }
+
+/* Шкала оплаты: бирюзой — внесённое, штриховкой — недостающее, как в бумажной ведомости */
+.meter {
+  grid-column: 1 / -1;
+  height: 6px;
+  margin-top: 8px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: repeating-linear-gradient(-45deg, var(--owed) 0 3px, transparent 3px 6px);
+}
+
+.meter-fill {
+  display: block;
+  height: 100%;
+  background: var(--paid);
+  border-radius: 3px;
+  transition: width 0.5s ease-out;
+}
+
+.debtor-call {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--accent);
+}
+
+.debtor-call svg { width: 20px; height: 20px; }
+
+.state {
+  padding: 32px 0;
+  color: var(--ink-soft);
+}
+
+.state p { margin: 0 0 16px; max-width: 32ch; }
+
+.state code {
+  font-size: 0.9em;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--line);
+  color: var(--ink);
+}
+
+/* Форма оплаты: на телефоне — шторка снизу, на широком экране — окно по центру */
+.sheet {
+  width: 100%;
+  max-width: 100%;
+  max-height: 92dvh;
+  margin: auto 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 20px 20px 0 0;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.sheet::backdrop { background: rgb(10 15 30 / 0.45); }
+
+.sheet[open] { animation: sheet-in 0.22s ease-out; }
+
+@keyframes sheet-in {
+  from { transform: translateY(24px); opacity: 0; }
+}
+
+.payment-form {
+  display: grid;
+  gap: 18px;
+  padding: 8px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-right: -10px;
+}
+
+.sheet-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 650;
+}
+
+.field { display: grid; gap: 6px; }
+
+.field label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.field input, .field select {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  font-size: 1.0625rem;
+}
+
+.field input[aria-invalid='true'], .field select[aria-invalid='true'] { border-color: var(--danger); }
+
+#payment-amount { font-size: 1.375rem; font-weight: 650; }
+
+.hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+.hint:empty, .form-error:empty, .quick-fill:empty { display: none; }
+
+.quick-fill {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-fill button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.form-error {
+  margin: 0;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.toast {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(var(--bar-height) + 12px);
+  z-index: 20;
+  max-width: 30rem;
+  margin: 0 auto;
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+  animation: sheet-in 0.2s ease-out;
+}
+
+/* Широкий экран: сводка и кнопка слева, ведомость справа */
+@media (min-width: 900px) {
+  .page {
+    max-width: 64rem;
+    display: grid;
+    grid-template-columns: 22rem 1fr;
+    gap: 64px;
+    padding-top: 40px;
+    padding-bottom: 48px;
+  }
+
+  .masthead {
+    position: sticky;
+    top: 40px;
+    align-self: start;
+  }
+
+  .action-bar {
+    position: static;
+    margin-top: 32px;
+    padding: 0;
+    background: none;
+    backdrop-filter: none;
+    border: 0;
+  }
+
+  .toast { bottom: 24px; }
+
+  .sheet {
+    max-width: 28rem;
+    margin: auto;
+    border-radius: 20px;
+  }
+
+  .payment-form { padding: 16px 24px 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
