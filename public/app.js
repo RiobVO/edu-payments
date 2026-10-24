@@ -630,8 +630,9 @@ async function submitStudent(event) {
     }
     f.dialog.close();
     await loadMonth();
-    // После правки возвращаемся в карточку — там видно, как изменился долг
-    if (editingId) openStudent(saved.id);
+    // После правки возвращаемся в карточку — там видно, как изменился долг. Но только если за время
+    // обновления списка пользователь не открыл другую шторку: её нельзя закрывать из-под него
+    if (editingId && !document.querySelector('dialog[open]')) openStudent(saved.id);
   } catch (err) {
     if (!isCurrent()) return;
     const field = /body\/(\w+)/.exec(err.message)?.[1];
