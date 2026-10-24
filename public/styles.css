@@ -168,9 +168,14 @@ svg {
   border-top: 1px solid var(--line);
 }
 
-.action-bar .btn-primary {
-  display: block;
-  width: 100%;
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actions .btn-primary { flex: 1; }
+
+.action-bar .actions {
   max-width: 32rem;
   margin: 0 auto;
 }
@@ -197,6 +202,55 @@ svg {
   background: var(--surface);
   color: var(--accent);
 }
+
+.btn-danger {
+  min-height: 52px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--danger);
+  color: var(--surface);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-text {
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-text.danger { color: var(--danger); }
+
+/* Переключатель «Должники | Все ученики»: сегменты одной ширины, выбранный — на белой подложке */
+.view-switch {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 4px;
+  border-radius: var(--radius);
+  background: var(--line);
+}
+
+.view-switch button {
+  flex: 1;
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--ink-soft);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.view-switch button[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.view-switch span { font-weight: 400; color: var(--ink-soft); }
 
 /* Список должников — строки с разделителями, а не карточки: так он читается как ведомость */
 .debtors {
@@ -273,6 +327,11 @@ svg {
   border-radius: 3px;
   transition: width 0.5s ease-out;
 }
+
+.debtor[data-status='paid'] .debtor-debt { color: var(--paid); font-weight: 600; }
+.debtor[data-status='not-started'] .debtor-debt { color: var(--ink-soft); font-weight: 400; }
+/* Ещё не начал учиться — штриховка «недоплачено» здесь вводила бы в заблуждение */
+.debtor[data-status='not-started'] .meter { visibility: hidden; }
 
 .debtor-call {
   flex: none;
@@ -364,6 +423,87 @@ svg {
 
 #payment-amount { font-size: 1.375rem; font-weight: 650; }
 
+/* Карточка ученика */
+.student-card {
+  display: grid;
+  gap: 18px;
+  padding: 8px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+}
+
+.sheet-head h2 { overflow-wrap: anywhere; }
+
+.sheet-sub {
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+}
+
+/* Значения не рвутся посреди номера или даты: целые колонки переносятся на новую строку */
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  margin: 0;
+}
+
+.facts dt {
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+
+.facts dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.facts a { color: var(--accent); text-decoration: none; }
+
+.month-status {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--paper);
+  font-weight: 600;
+}
+
+.month-status[data-status='debt'] { color: var(--ink); }
+.month-status[data-status='paid'] { color: var(--paid); }
+.month-status[data-status='not-started'] { color: var(--ink-soft); font-weight: 400; }
+
+.history h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.history ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.history li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.history li:last-child { border-bottom: 0; }
+
+.danger-zone {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.confirm p {
+  margin: 8px 0 12px;
+  font-weight: 600;
+}
+
+.confirm .btn-danger { flex: 1; }
+
 .hint {
   margin: 0;
   font-size: 0.875rem;
@@ -446,7 +586,7 @@ svg {
     border-radius: 20px;
   }
 
-  .payment-form { padding: 16px 24px 24px; }
+  .payment-form, .student-card { padding: 16px 24px 24px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

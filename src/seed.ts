@@ -18,6 +18,7 @@ const today = todayIn(process.env.TIME_ZONE ?? 'Asia/Tashkent', new Date());
 const [year, month] = today.split('-').map(Number) as [number, number];
 const prevMonth = month === 1 ? `${year - 1}-12` : `${year}-${String(month - 1).padStart(2, '0')}`;
 const thisMonth = today.slice(0, 7);
+const nextMonth = month === 12 ? `${year + 1}-01` : `${year}-${String(month + 1).padStart(2, '0')}`;
 // Записались в начале прошлого месяца — чтобы и за прошлый месяц было что смотреть
 const joined = `${prevMonth}-01`;
 
@@ -48,6 +49,8 @@ for (const [name, phone, group, fee, prevPayments, currentPayments] of students)
     insertPayment.run(id, amount, date > today ? today : date);
   });
 }
+// Записана заранее, со следующего месяца: за текущий не должна
+insertStudent.get('Камила Турсунова', '+998 90 777-66-55', 'English B1', 500_000, `${nextMonth}-01`);
 db.exec('COMMIT');
 
-process.stdout.write(`Добавлено ${students.length} учеников с оплатами за ${prevMonth} и ${thisMonth} в ${dbPath}\n`);
+process.stdout.write(`Добавлено ${students.length + 1} учеников с оплатами за ${prevMonth} и ${thisMonth} в ${dbPath}\n`);

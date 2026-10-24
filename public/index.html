@@ -30,12 +30,19 @@
       </p>
 
       <div class="action-bar">
-        <button type="button" class="btn-primary" id="open-payment">Внести оплату</button>
+        <div class="actions">
+          <button type="button" class="btn-secondary" id="open-student-form">+ Ученик</button>
+          <button type="button" class="btn-primary" id="open-payment">Внести оплату</button>
+        </div>
       </div>
     </header>
 
     <section class="debtors-section" aria-labelledby="debtors-heading">
-      <h2 id="debtors-heading" class="visually-hidden">Список должников</h2>
+      <h2 id="debtors-heading" class="visually-hidden">Ученики за месяц</h2>
+      <div class="view-switch" role="group" aria-label="Кого показать">
+        <button type="button" data-view="debtors" aria-pressed="true">Должники <span id="count-debtors"></span></button>
+        <button type="button" data-view="all" aria-pressed="false">Все ученики <span id="count-all"></span></button>
+      </div>
       <ul class="debtors" id="debtors"></ul>
       <div class="state" id="state" hidden>
         <p id="state-text"></p>
@@ -48,7 +55,7 @@
     <form class="payment-form" id="payment-form" novalidate>
       <div class="sheet-head">
         <h2 id="payment-title">Новая оплата</h2>
-        <button type="button" class="icon-btn" id="close-payment" aria-label="Закрыть">
+        <button type="button" class="icon-btn" data-close aria-label="Закрыть">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </div>
@@ -76,6 +83,89 @@
       <p class="form-error" id="payment-error" role="alert"></p>
 
       <button type="submit" class="btn-primary" id="submit-payment">Внести оплату</button>
+    </form>
+  </dialog>
+
+  <dialog class="sheet" id="student-dialog" aria-labelledby="student-title">
+    <div class="student-card">
+      <div class="sheet-head">
+        <div>
+          <h2 id="student-title"></h2>
+          <p class="sheet-sub" id="student-group"></p>
+        </div>
+        <button type="button" class="icon-btn" data-close aria-label="Закрыть">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+
+      <dl class="facts">
+        <div><dt>Телефон</dt><dd><a id="student-phone"></a></dd></div>
+        <div><dt>В месяц</dt><dd id="student-fee"></dd></div>
+        <div><dt>Учится с</dt><dd id="student-start"></dd></div>
+      </dl>
+
+      <p class="month-status" id="student-status"></p>
+
+      <div class="actions">
+        <button type="button" class="btn-secondary" id="edit-student">Изменить</button>
+        <button type="button" class="btn-primary" id="pay-student">Внести оплату</button>
+      </div>
+
+      <section class="history" aria-labelledby="history-title">
+        <h3 id="history-title">Оплаты</h3>
+        <ul id="history-list"></ul>
+        <p class="hint" id="history-state"></p>
+      </section>
+
+      <div class="danger-zone">
+        <button type="button" class="btn-text danger" id="delete-student">Удалить ученика</button>
+        <div class="confirm" id="delete-confirm" hidden>
+          <p id="delete-question"></p>
+          <div class="actions">
+            <button type="button" class="btn-secondary" id="delete-cancel">Отмена</button>
+            <button type="button" class="btn-danger" id="delete-yes">Удалить</button>
+          </div>
+        </div>
+        <p class="form-error" id="student-error" role="alert"></p>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="sheet" id="student-form-dialog" aria-labelledby="student-form-title">
+    <form class="payment-form" id="student-form" novalidate>
+      <div class="sheet-head">
+        <h2 id="student-form-title">Новый ученик</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Закрыть">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+
+      <div class="field">
+        <label for="sf-name">Имя и фамилия</label>
+        <input id="sf-name" name="name" autocomplete="off" maxlength="100" required>
+      </div>
+      <div class="field">
+        <label for="sf-phone">Телефон</label>
+        <input id="sf-phone" name="phone" type="tel" inputmode="tel" autocomplete="off" placeholder="+998 90 123-45-67" maxlength="30" required>
+      </div>
+      <div class="field">
+        <label for="sf-group">Группа</label>
+        <input id="sf-group" name="group" list="group-options" autocomplete="off" maxlength="50" required>
+        <datalist id="group-options"></datalist>
+      </div>
+      <div class="field">
+        <label for="sf-fee">Оплата в месяц, сум</label>
+        <input id="sf-fee" name="monthlyFee" inputmode="numeric" autocomplete="off" placeholder="0" required>
+      </div>
+      <div class="field">
+        <label for="sf-start">Учится с</label>
+        <input id="sf-start" name="startDate" type="date" required>
+        <p class="hint">За месяцы до этой даты долга не будет</p>
+      </div>
+
+      <p class="form-error" id="student-form-error" role="alert"></p>
+
+      <button type="submit" class="btn-primary" id="submit-student">Добавить ученика</button>
     </form>
   </dialog>
 
