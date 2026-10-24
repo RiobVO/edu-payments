@@ -27,5 +27,15 @@ export function openDatabase(path: string): DatabaseSync {
   // В SQLite внешние ключи выключены по умолчанию — без этого не сработает каскадное удаление оплат
   db.exec('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;');
   db.exec(SCHEMA);
+  migrate(db);
   return db;
+}
+
+// Первая опубликованная версия хранила дату записи в created_at; теперь это редактируемая start_date.
+// CREATE TABLE IF NOT EXISTS старую таблицу не трогает, поэтому колонку переименовываем сами.
+function migrate(db: DatabaseSync): void {
+  const columns = db.prepare('SELECT name FROM pragma_table_info(?)').all('students') as { name: string }[];
+  if (columns.some((c) => c.name === 'created_at')) {
+    db.exec('ALTER TABLE students RENAME COLUMN created_at TO start_date');
+  }
 }
