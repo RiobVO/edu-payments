@@ -1,9 +1,6 @@
 // Страница должников: список за месяц + форма оплаты. Без фреймворка — две формы не стоят сборки.
 // Весь пользовательский текст выводится через textContent, чтобы имя вроде <img onerror> не стало XSS.
 
-// Часовой пояс центра: «сегодня» должно совпадать с тем, как считает сервер (TIME_ZONE)
-const TIME_ZONE = 'Asia/Tashkent';
-
 const MONTHS = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
 const MONTHS_IN = ['январе', 'феврале', 'марте', 'апреле', 'мае', 'июне', 'июле', 'августе', 'сентябре', 'октябре', 'ноябре', 'декабре'];
 
@@ -37,6 +34,8 @@ const ui = {
 };
 
 const state = {
+  // Часовой пояс центра приходит с сервера (/config), чтобы «сегодня» в форме совпадало с проверкой API
+  timeZone: undefined,
   month: null,
   currentMonth: null,
   debtors: [],
@@ -44,7 +43,7 @@ const state = {
 };
 
 function todayInCenter() {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  return new Intl.DateTimeFormat('en-CA', { timeZone: state.timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 }
 
 function shiftMonth(month, delta) {
@@ -60,9 +59,12 @@ function monthTitle(month) {
   return `${name[0].toUpperCase()}${name.slice(1)} ${month.slice(0, 4)}`;
 }
 
+// Разрешены только цифры и пробелы-разделители. Точку, минус или буквы не вырезаем молча:
+// иначе вставленное «500000.50» превратилось бы в 50 000 050 сум. Возвращает null для такого ввода.
 function parseAmount(text) {
-  const digits = text.replace(/\D/g, '');
-  return digits ? Number(digits) : 0;
+  const compact = text.replace(/[\s\u00a0\u202f]/g, '');
+  if (compact === '') return 0;
+  return /^\d{1,11}$/.test(compact) ? Number(compact) : null;
 }
 
 async function api(path, options = {}) {
@@ -164,10 +166,16 @@ function showState(text, { retry = false, html = null } = {}) {
   ui.retry.hidden = !retry;
 }
 
+// При быстром листании месяцев ответы могут прийти не по порядку — применяем только последний запрос
+let debtorsRequest = 0;
+
 async function loadDebtors(month = state.month) {
+  const request = ++debtorsRequest;
+  const isStale = () => request !== debtorsRequest;
   ui.list.setAttribute('aria-busy', 'true');
   try {
     const data = await api(month ? `/debtors?month=${month}` : '/debtors');
+    if (isStale()) return;
     state.month = data.month;
     state.currentMonth ??= data.month;
     state.debtors = data.debtors;
@@ -178,19 +186,21 @@ async function loadDebtors(month = state.month) {
     renderDebtors(data.debtors);
     ui.state.hidden = true;
 
-    if (data.debtors.length === 0) await showEmptyState(data.month);
+    if (data.debtors.length === 0) await showEmptyState(data.month, isStale);
   } catch (err) {
+    if (isStale()) return;
     ui.summaryText.textContent = 'Нет данных';
     ui.summaryTotal.replaceChildren();
     ui.list.replaceChildren();
     showState(`Не удалось загрузить должников: ${err.message}. Проверьте, что сервер запущен, и повторите.`, { retry: true });
   } finally {
-    ui.list.removeAttribute('aria-busy');
+    if (!isStale()) ui.list.removeAttribute('aria-busy');
   }
 }
 
-async function showEmptyState(month) {
+async function showEmptyState(month, isStale) {
   const students = await api('/students');
+  if (isStale()) return;
   if (students.length > 0) {
     showState(`За ${MONTHS[monthIndex(month)]} все ученики оплатили полностью.`);
     return;
@@ -248,7 +258,11 @@ function updateDateHint() {
   ui.dateHint.textContent = value ? `Засчитается за ${MONTHS[monthIndex(value.slice(0, 7))]} ${value.slice(0, 4)}` : '';
 }
 
+// Номер открытия формы: ответ /students от прошлого открытия не должен подменить выбранного ученика
+let paymentSession = 0;
+
 async function openPayment(studentId = null) {
+  const session = ++paymentSession;
   ui.form.reset();
   ui.error.textContent = '';
   ui.form.querySelectorAll('[aria-invalid]').forEach((node) => node.removeAttribute('aria-invalid'));
@@ -258,12 +272,15 @@ async function openPayment(studentId = null) {
   updateDateHint();
   ui.dialog.showModal();
 
+  let students;
   try {
-    state.students = await api('/students');
+    students = await api('/students');
   } catch (err) {
-    ui.error.textContent = `Не удалось загрузить учеников: ${err.message}`;
+    if (session === paymentSession) ui.error.textContent = `Не удалось загрузить учеников: ${err.message}`;
     return;
   }
+  if (session !== paymentSession) return;
+  state.students = students;
   ui.student.replaceChildren(
     el('option', { value: '', text: 'Выберите ученика' }),
     ...state.students.map((s) => el('option', { value: s.id, text: `${s.name} (${s.group})` })),
@@ -288,7 +305,8 @@ function validate() {
   const problems = [];
 
   if (!studentId) problems.push([ui.student, 'Выберите ученика']);
-  if (amount <= 0) problems.push([ui.amount, 'Введите сумму больше нуля']);
+  if (amount === null) problems.push([ui.amount, 'Сумма — целое число сумов, только цифры']);
+  else if (amount <= 0) problems.push([ui.amount, 'Введите сумму больше нуля']);
   if (!date) problems.push([ui.date, 'Укажите дату оплаты']);
   else if (date > todayInCenter()) problems.push([ui.date, 'Дата оплаты не может быть в будущем']);
 
@@ -344,6 +362,7 @@ ui.next.addEventListener('click', () => loadDebtors(shiftMonth(state.month, 1)))
 ui.retry.addEventListener('click', () => loadDebtors());
 ui.openPayment.addEventListener('click', () => openPayment());
 ui.close.addEventListener('click', () => ui.dialog.close());
+ui.dialog.addEventListener('close', () => { paymentSession += 1; });
 // Клик по затемнённому фону вокруг шторки закрывает её
 ui.dialog.addEventListener('click', (event) => { if (event.target === ui.dialog) ui.dialog.close(); });
 ui.student.addEventListener('change', () => {
@@ -352,10 +371,21 @@ ui.student.addEventListener('change', () => {
 });
 ui.amount.addEventListener('input', () => {
   const amount = parseAmount(ui.amount.value);
-  ui.amount.value = amount ? money.format(amount) : '';
+  // Некорректный ввод оставляем как есть — validate() покажет ошибку, а не исправит сумму втихую
+  if (amount !== null) ui.amount.value = amount ? money.format(amount) : '';
   ui.amount.removeAttribute('aria-invalid');
 });
 ui.date.addEventListener('input', updateDateHint);
 ui.form.addEventListener('submit', submitPayment);
 
-loadDebtors();
+async function init() {
+  try {
+    ({ timeZone: state.timeZone } = await api('/config'));
+  } catch {
+    // Без /config берём пояс браузера: дату в будущем всё равно отсечёт сервер, а список загрузится и покажет ошибку сам
+    state.timeZone = undefined;
+  }
+  await loadDebtors();
+}
+
+init();
