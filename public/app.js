@@ -263,6 +263,9 @@ let paymentSession = 0;
 
 async function openPayment(studentId = null) {
   const session = ++paymentSession;
+  // Дата по умолчанию считается в поясе центра — без него форма могла бы подставить «вчера» или «завтра»
+  await configReady;
+  if (session !== paymentSession) return;
   ui.form.reset();
   ui.error.textContent = '';
   ui.form.querySelectorAll('[aria-invalid]').forEach((node) => node.removeAttribute('aria-invalid'));
@@ -378,14 +381,14 @@ ui.amount.addEventListener('input', () => {
 ui.date.addEventListener('input', updateDateHint);
 ui.form.addEventListener('submit', submitPayment);
 
-async function init() {
+async function loadConfig() {
   try {
     ({ timeZone: state.timeZone } = await api('/config'));
   } catch {
     // Без /config берём пояс браузера: дату в будущем всё равно отсечёт сервер, а список загрузится и покажет ошибку сам
     state.timeZone = undefined;
   }
-  await loadDebtors();
 }
 
-init();
+const configReady = loadConfig();
+configReady.then(() => loadDebtors());
