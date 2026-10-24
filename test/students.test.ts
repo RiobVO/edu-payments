@@ -134,6 +134,17 @@ describe('DELETE /students/:id', () => {
     expect((await app.inject({ method: 'GET', url: `/students/${id}/payments` })).statusCode).toBe(404);
   });
 
+  it('не отдаёт id удалённого ученика новому: оплата по старому id не попадёт другому человеку', async () => {
+    await createStudent(app, { name: 'Первый' });
+    const removed = await createStudent(app, { name: 'Удалённый' });
+    await app.inject({ method: 'DELETE', url: `/students/${removed.id}` });
+
+    const next = await createStudent(app, { name: 'Новый' });
+    expect(next.id).not.toBe(removed.id);
+    const res = await app.inject({ method: 'POST', url: `/students/${removed.id}/payments`, payload: { amount: 1000 } });
+    expect(res.statusCode).toBe(404);
+  });
+
   it('отдаёт 404 для несуществующего ученика', async () => {
     const res = await app.inject({ method: 'DELETE', url: '/students/999' });
     expect(res.statusCode).toBe(404);
